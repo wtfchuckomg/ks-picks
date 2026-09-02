@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friday Night Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#EDF0EA; --panel:#FFFFFF; --panel-2:#F5F7F2;
+  --ink:#12180F; --muted:#5C6656; --line:#D3DACB; --line-2:#E3E8DD;
+  --lamp:#C26A0F; --lamp-soft:#F6E7D3;
+  --turf:#2F7D4F; --brick:#B04A34;
+  --shadow:0 1px 2px rgba(18,24,15,.06),0 8px 24px -12px rgba(18,24,15,.18);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1310; --panel:#161C17; --panel-2:#1C231D;
+    --ink:#E8EDE4; --muted:#8E9A88; --line:#28312A; --line-2:#222A24;
+    --lamp:#EFA042; --lamp-soft:#33261741;
+    --turf:#54B075; --brick:#D9705A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1310; --panel:#161C17; --panel-2:#1C231D;
+  --ink:#E8EDE4; --muted:#8E9A88; --line:#28312A; --line-2:#222A24;
+  --lamp:#EFA042; --lamp-soft:#33261741;
+  --turf:#54B075; --brick:#D9705A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font:400 15px/1.55 "IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.disp{font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-wrap:balance;margin:0}
+.mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- scoreboard bar ---- */
+.board{
+  position:sticky;top:0;z-index:40;background:var(--panel);
+  border-bottom:1px solid var(--line);
+}
+.board-inner{
+  max-width:760px;margin:0 auto;padding:14px 18px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.brand-name{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;
+  letter-spacing:.06em;text-transform:uppercase;line-height:1;
+}
+.brand-sub{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.clock{text-align:right;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.clock-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.clock-val{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.clock.locked .clock-val{color:var(--brick)}
+.clock.soon .clock-val{color:var(--lamp)}
+.whoami{
+  display:flex;align-items:center;gap:8px;font-size:13px;
+  border-left:1px solid var(--line);padding-left:16px;
+}
+.whoami b{font-weight:600}
+.linkish{background:none;border:0;padding:0;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:2px}
+.linkish:hover{color:var(--lamp)}
+
+/* yard-line motif */
+.yardline{height:6px;background:var(--panel);border-bottom:1px solid var(--line);
+  background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 28px);}
+
+/* ---- tabs ---- */
+nav.tabs{max-width:760px;margin:0 auto;padding:16px 18px 0;display:flex;gap:4px;flex-wrap:wrap}
+.tab{
+  background:none;border:0;padding:8px 14px;border-radius:999px;
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+}
+.tab:hover{color:var(--ink);background:var(--panel-2)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--ground)}
+
+main{max-width:760px;margin:0 auto;padding:20px 18px 80px}
+.view[hidden]{display:none!important}
+
+/* ---- cards / generic ---- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.card+.card{margin-top:14px}
+.card-hd{padding:14px 16px;border-bottom:1px solid var(--line-2);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card-hd h2{font-size:20px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.card-bd{padding:16px}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* ---- game rows ---- */
+.games{display:flex;flex-direction:column;gap:8px}
+.game{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  display:grid;grid-template-columns:34px 1fr;overflow:hidden;
+}
+.game-no{
+  display:flex;align-items:center;justify-content:center;
+  background:var(--panel-2);border-right:1px solid var(--line-2);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--muted);
+}
+.matchup{display:grid;grid-template-columns:1fr 26px 1fr}
+.side{
+  background:none;border:0;padding:14px 12px;text-align:left;
+  display:flex;align-items:center;gap:9px;min-height:56px;
+  border-radius:0;transition:background .12s ease;
+}
+.side:hover:not(:disabled){background:var(--panel-2)}
+.side:disabled{cursor:default}
+.side.home{text-align:right;flex-direction:row-reverse}
+.box{
+  flex:0 0 18px;width:18px;height:18px;border:1.5px solid var(--line);
+  border-radius:4px;display:grid;place-items:center;transition:.12s ease;
+}
+.box svg{width:12px;height:12px;opacity:0;stroke:var(--ground);stroke-width:3;fill:none}
+.side[aria-pressed="true"] .box{background:var(--lamp);border-color:var(--lamp)}
+.side[aria-pressed="true"] .box svg{opacity:1}
+.team{font-weight:500;font-size:15px;line-height:1.25}
+.side[aria-pressed="true"] .team{font-weight:600}
+.at{
+  display:grid;place-items:center;font-size:11px;color:var(--muted);
+  font-family:"IBM Plex Mono",monospace;
+  border-left:1px solid var(--line-2);border-right:1px solid var(--line-2);
+}
+.game.correct{border-color:var(--turf)}
+.game.wrong{border-color:var(--brick)}
+.side.won .team{color:var(--turf)}
+.side.won .box{border-color:var(--turf)}
+.side[aria-pressed="true"].lost .team{color:var(--brick)}
+.side[aria-pressed="true"].lost .box{background:var(--brick);border-color:var(--brick)}
+
+/* ---- status bar ---- */
+.savebar{
+  position:sticky;bottom:0;margin-top:16px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);flex-wrap:wrap;
+}
+.tally{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:14px;margin-right:auto}
+.tally small{color:var(--muted);font-weight:500}
+.status{font-size:13px;color:var(--muted)}
+.status.ok{color:var(--turf)}
+.status.err{color:var(--brick)}
+
+/* ---- buttons ---- */
+.btn{
+  background:var(--ink);color:var(--ground);border:1px solid var(--ink);
+  padding:9px 18px;border-radius:7px;font-weight:600;font-size:14px;
+}
+.btn:hover:not(:disabled){opacity:.88}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover:not(:disabled){border-color:var(--ink);opacity:1}
+.btn.lamp{background:var(--lamp);border-color:var(--lamp);color:#fff}
+.btn.danger{background:none;color:var(--brick);border-color:var(--line)}
+.btn.sm{padding:6px 12px;font-size:13px}
+
+/* ---- tables ---- */
+.twrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{
+  text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:600;
+  font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:9px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.rank{color:var(--muted);font-family:"IBM Plex Mono",monospace;width:34px}
+tr.leader td{background:var(--lamp-soft)}
+tr.leader .rank{color:var(--lamp);font-weight:600}
+.you-chip{
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+  background:var(--ink);color:var(--ground);padding:1px 6px;border-radius:999px;margin-left:6px;
+}
+
+/* ---- forms ---- */
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500}
+input,select{
+  font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel-2);color:var(--ink);width:100%;
+}
+input:focus,select:focus{outline:2px solid var(--lamp);outline-offset:-1px;border-color:var(--lamp)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>*{flex:1 1 180px}
+.row>.shrink{flex:0 0 auto}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{
+  display:inline-block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);
+}
+.pill.open{color:var(--turf);border-color:var(--turf)}
+.pill.locked{color:var(--brick);border-color:var(--brick)}
+.pill.draft{color:var(--muted)}
+.pill.final{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+
+/* ---- gate ---- */
+.gate{max-width:440px;margin:8vh auto;padding:0 18px}
+.gate .card-bd{display:flex;flex-direction:column;gap:14px}
+.gate h1{font-size:30px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+.roster-list{display:flex;flex-wrap:wrap;gap:6px}
+.roster-btn{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:999px;
+  padding:6px 14px;font-size:14px;font-weight:500;
+}
+.roster-btn:hover{border-color:var(--lamp);color:var(--lamp)}
+.sep{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
+.err{color:var(--brick);font-size:13px;min-height:18px}
+.empty{color:var(--muted);font-size:14px;text-align:center;padding:28px 12px}
+.banner{
+  background:var(--lamp-soft);border:1px solid var(--lamp);border-radius:8px;
+  padding:11px 14px;font-size:13px;margin-bottom:14px;
+}
+.adm-game{display:grid;grid-template-columns:26px 1fr 18px 1fr;gap:8px;align-items:center;margin-bottom:7px}
+.adm-game .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);text-align:right}
+.adm-game .at2{text-align:center;color:var(--muted);font-size:11px}
+.res-row{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:center;margin-bottom:7px}
+.res-opts{display:grid;grid-template-columns:1fr 1fr 62px;gap:6px}
+.res-opt{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:6px;
+  padding:7px 10px;font-size:13px;text-align:center;overflow:hidden;text-overflow:ellipsis;
+}
+.res-opt[aria-pressed="true"]{background:var(--turf);border-color:var(--turf);color:#fff;font-weight:600}
+.res-opt.clear[aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
+@media (max-width:560px){
+  .savebar{row-gap:4px;padding:10px 14px}
+  .savebar .status{order:3;flex:1 1 100%}
+  .savebar .btn{order:2}
+  .matchup{grid-template-columns:1fr 22px 1fr}
+  .team{font-size:14px}
+  .grid-2{grid-template-columns:1fr}
+  .adm-game{grid-template-columns:20px 1fr;gap:5px}
+  .adm-game .at2{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ GATE (choose who you are) ============ -->
+<div id="gate" class="gate" hidden>
+  <div class="card">
+    <div class="card-bd">
+      <div>
+        <div class="eyebrow" id="gate-eyebrow">High School Football Pool</div>
+        <h1 id="gate-title">Friday Night Picks</h1>
+      </div>
+      <p class="hint">Tap your name to start picking. No password, no account &mdash; just claim your name once on this device.</p>
+      <div>
+        <div class="eyebrow" style="margin-bottom:7px">On the roster</div>
+        <div class="roster-list" id="roster-list"></div>
+      </div>
+      <div class="sep">or</div>
+      <label class="f">Add yourself
+        <input id="new-name" type="text" placeholder="Your name" maxlength="28" autocomplete="off">
+      </label>
+      <button class="btn" id="join-btn">Join the pool</button>
+      <p class="err" id="gate-err"></p>
+      <div class="sep">commissioner</div>
+      <button class="btn ghost" id="admin-signin">Sign in as commissioner</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="board">
+    <div class="board-inner">
+      <div class="brand">
+        <span class="brand-name" id="league-name">Friday Night Picks</span>
+        <span class="brand-sub" id="week-label">No week open</span>
+      </div>
+      <div class="clock" id="clock">
+        <span class="clock-label" id="clock-label">Picks lock in</span>
+        <span class="clock-val" id="clock-val">&mdash;</span>
+      </div>
+      <div class="whoami">
+        <div>
+          <b id="me-name">&mdash;</b>
+          <div><button class="linkish" id="switch-user">not you?</button></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="yardline"></div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="picks" aria-selected="true">Make Picks</button>
+    <button class="tab" role="tab" data-view="board" aria-selected="false">Standings</button>
+    <button class="tab" role="tab" data-view="mine" aria-selected="false">My Results</button>
+    <button class="tab" role="tab" data-view="admin" aria-selected="false" id="tab-admin" hidden>Commissioner</button>
+  </nav>
+
+  <main>
+    <!-- ---- PICKS ---- -->
+    <section class="view" id="view-picks">
+      <div id="picks-banner"></div>
+      <div class="games" id="games"></div>
+      <div class="savebar" id="savebar" hidden>
+        <span class="tally" id="tally">0<small>/0 picked</small></span>
+        <span class="status" id="save-status"></span>
+        <button class="btn lamp" id="save-btn">Submit picks</button>
+      </div>
+    </section>
+
+    <!-- ---- STANDINGS ---- -->
+    <section class="view" id="view-board" hidden>
+      <div class="card">
+        <div class="card-hd">
+          <h2>Season standings</h2>
+          <span class="hint" id="season-note"></span>
+        </div>
+        <div class="card-bd twrap" id="season-table"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <h2>Week by week</h2>
+          <select id="board-week" style="width:auto;margin-left:auto"></select>
+        </div>
+        <div class="card-bd twrap" id="week-table"></div>
+      </div>
+    </section>
+
+    <!-- ---- MY RESULTS ---- -->
+    <section class="view" id="view-mine" hidden>
+      <div class="card">
+        <div class="card-hd"><h2>My results</h2><span class="hint">Only you and the commissioner can see your picks.</span></div>
+        <div class="card-bd" id="mine-body"></div>
+      </div>
+    </section>
+
+    <!-- ---- ADMIN ---- -->
+    <section class="view" id="view-admin" hidden>
+      <div class="card">
+        <div class="card-hd">
+          <h2>Set up a week</h2>
+          <select id="adm-week-sel" style="width:auto;margin-left:auto"></select>
+        </div>
+        <div class="card-bd">
+          <div class="row" style="margin-bottom:14px">
+            <label class="f">Week number<input id="adm-num" type="number" min="1" max="30" value="1"></label>
+            <label class="f">Label<input id="adm-label" type="text" placeholder="Week 1"></label>
+            <label class="f">Picks lock at<input id="adm-deadline" type="datetime-local"></label>
+          </div>
+          <div class="eyebrow" style="margin-bottom:8px">The 15 games &mdash; away team at home team</div>
+          <div id="adm-games"></div>
+          <div class="row" style="margin-top:16px">
+            <div class="shrink"><button class="btn" id="adm-save">Save week</button></div>
+            <div class="shrink"><button class="btn lamp" id="adm-publish">Publish to players</button></div>
+            <div class="shrink"><button class="btn ghost" id="adm-unpublish">Unpublish</button></div>
+            <span class="status shrink" id="adm-status" style="flex:1 1 100%"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h2>Enter results</h2><span class="hint">Tap the winner of each game, then post the scores.</span></div>
+        <div class="card-bd">
+          <div id="adm-results"></div>
+          <div class="row" style="margin-top:14px">
+            <div class="shrink"><button class="btn lamp" id="adm-score">Post scores for this week</button></div>
+            <span class="status shrink" id="adm-score-status" style="flex:1 1 100%"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h2>Everyone&rsquo;s picks</h2><span class="hint">Commissioner only.</span></div>
+        <div class="card-bd twrap" id="adm-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h2>Roster</h2><span class="hint">Reset a player if they need to re-claim their name on a new phone.</span></div>
+        <div class="card-bd twrap" id="adm-roster"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+/* ==========================================================
+   1. CONFIG — the only part you need to edit.
+   ========================================================== */
+
+// Paste your Firebase web-app config here (Firebase console →
+// Project settings → Your apps → Web app → SDK setup → Config).
+const firebaseConfig = {
+  apiKey:            "AIzaSyAm4TiQ2tE8XPf64I5qJfZnXc4n0seYSeg",
+  authDomain:        "ks-picks.firebaseapp.com",
+  projectId:         "ks-picks",
+  storageBucket:     "ks-picks.firebasestorage.app",
+  messagingSenderId: "501020589894",
+  appId:             "1:501020589894:web:0a2011c24f5000a0fc6f47"
+};
+
+// Google accounts allowed to run the pool. Must match firestore.rules.
+const ADMIN_EMAILS = ["chuck8303@gmail.com"];
+
+const LEAGUE_NAME     = "Friday Night Picks";
+const GAMES_PER_WEEK  = 15;
+
+// "all"    — season % counts every game of every scored week, so a week
+//            you skip counts as zeros. Rewards showing up every week.
+// "played" — season % only counts weeks you actually submitted.
+const SEASON_PCT_MODE = "all";
+
+/* ==========================================================
+   2. Firebase
+   ========================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously, signOut,
+         GoogleAuthProvider, signInWithPopup }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, updateDoc, deleteDoc, collection,
+         getDocs, query, where, onSnapshot, writeBatch, Timestamp, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ==========================================================
+   3. Helpers
+   ========================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const pad2   = n => String(n).padStart(2, "0");
+const weekId = n => "w" + pad2(n);
+const slug   = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
+                     .replace(/^-|-$/g, "").slice(0, 40);
+const pct = (c, t) => t > 0 ? (c / t * 100) : 0;
+const fmtPct = (c, t) => t > 0 ? pct(c, t).toFixed(1) + "%" : "—";
+
+function toLocalInput(d) {
+  if (!d) return "";
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}` +
+         `T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function deadlineDate(w) {
+  if (!w || !w.deadline) return null;
+  return typeof w.deadline.toDate === "function" ? w.deadline.toDate() : new Date(w.deadline);
+}
+function isLocked(w) {
+  const d = deadlineDate(w);
+  return !d || Date.now() >= d.getTime();
+}
+function liveGames(w) {
+  return (w?.games || []).filter(g => g.away?.trim() && g.home?.trim());
+}
+function friendlyError(e) {
+  const code = e?.code || "";
+  if (code.includes("permission-denied"))
+    return "The server turned that down — picks are locked, or you're not the commissioner.";
+  if (code.includes("unavailable") || code.includes("network"))
+    return "Can't reach the server. Check your connection and try again.";
+  return e?.message || "Something went wrong.";
+}
+
+/* ==========================================================
+   4. State
+   ========================================================== */
+const S = {
+  uid: null, email: null, isAdmin: false,
+  me: null,                  // my player doc
+  players: [], weeks: [], scores: [],
+  myPicks: {}, picksLoaded: false,   // weekId -> pick doc
+  allPicks: [],              // admin only
+  view: "picks",
+  draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
+  admWeekId: null, admDraft: null, admResults: {},
+  boardWeekId: null,
+  ready: false
+};
+
+/* ==========================================================
+   5. Auth + subscriptions
+   ========================================================== */
+let unsubs = [];
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    try { await signInAnonymously(auth); }
+    catch (e) { $("#gate-err").textContent = friendlyError(e); document.getElementById("gate").hidden = false; }
+    return;
+  }
+  S.uid = user.uid;
+  S.email = user.email || null;
+  S.isAdmin = !!(user.email && ADMIN_EMAILS.includes(user.email));
+  subscribe();
+});
+
+function subscribe() {
+  unsubs.forEach(u => { try { u(); } catch {} });
+  unsubs = [];
+
+  unsubs.push(onSnapshot(collection(db, "players"), snap => {
+    S.players = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                  .sort((a, b) => a.name.localeCompare(b.name));
+    S.me = S.players.find(p => p.uid === S.uid) || null;
+    S.ready = true;
+    render();
+  }, err => showFatal(err)));
+
+  unsubs.push(onSnapshot(collection(db, "weeks"), snap => {
+    S.weeks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (a.num || 0) - (b.num || 0));
+    render();
+  }, err => showFatal(err)));
+
+  unsubs.push(onSnapshot(collection(db, "scores"), snap => {
+    S.scores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, err => showFatal(err)));
+
+  unsubs.push(onSnapshot(query(collection(db, "picks"), where("uid", "==", S.uid)), snap => {
+    S.myPicks = {};
+    snap.docs.forEach(d => { const p = d.data(); S.myPicks[p.weekId] = p; });
+    S.picksLoaded = true;
+    render();
+  }, err => showFatal(err)));
+
+  if (S.isAdmin) {
+    unsubs.push(onSnapshot(collection(db, "picks"), snap => {
+      S.allPicks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    }, err => console.warn("admin picks:", err)));
+  }
+}
+
+function showFatal(err) {
+  console.error(err);
+  const g = $("#gate-err");
+  if (g) g.textContent = friendlyError(err);
+}
+
+/* ==========================================================
+   6. Gate — claim your name
+   ========================================================== */
+function renderGate() {
+  $("#gate-title").textContent = LEAGUE_NAME;
+  const list = $("#roster-list");
+  if (!S.players.length) {
+    list.innerHTML = '<span class="hint">Nobody yet — be the first.</span>';
+  } else {
+    list.innerHTML = S.players.map(p => {
+      const taken = p.uid && p.uid !== S.uid;
+      return `<button class="roster-btn" data-claim="${esc(p.id)}"${taken ? ' data-taken="1"' : ""}>${esc(p.name)}</button>`;
+    }).join("");
+  }
+  $("#admin-signin").textContent = S.isAdmin
+    ? `Commissioner: ${esc(S.email)} — now pick your name`
+    : "Sign in as commissioner";
+  $("#admin-signin").disabled = S.isAdmin;
+}
+
+$("#roster-list").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-claim]");
+  if (!btn) return;
+  const p = S.players.find(x => x.id === btn.dataset.claim);
+  if (!p) return;
+  if (p.uid && p.uid !== S.uid) {
+    $("#gate-err").textContent =
+      `"${p.name}" is already claimed on another device. Ask the commissioner to reset it.`;
+    return;
+  }
+  try {
+    await updateDoc(doc(db, "players", p.id), { uid: S.uid });
+    $("#gate-err").textContent = "";
+  } catch (err) { $("#gate-err").textContent = friendlyError(err); }
+});
+
+$("#join-btn").addEventListener("click", async () => {
+  const name = $("#new-name").value.trim();
+  if (name.length < 2) { $("#gate-err").textContent = "Enter your name first."; return; }
+  const id = slug(name);
+  if (!id) { $("#gate-err").textContent = "Use at least a couple of letters."; return; }
+  if (S.players.some(p => p.id === id)) {
+    $("#gate-err").textContent = "That name is already on the roster — tap it above if it's you.";
+    return;
+  }
+  try {
+    await setDoc(doc(db, "players", id), {
+      id, name, uid: S.uid, createdAt: serverTimestamp()
+    });
+    $("#new-name").value = "";
+    $("#gate-err").textContent = "";
+  } catch (err) { $("#gate-err").textContent = friendlyError(err); }
+});
+$("#new-name").addEventListener("keydown", e => { if (e.key === "Enter") $("#join-btn").click(); });
+
+$("#admin-signin").addEventListener("click", async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (err) { $("#gate-err").textContent = friendlyError(err); }
+});
+
+$("#switch-user").addEventListener("click", async () => {
+  if (!confirm("Release your name on this device? You'll be able to claim it again here.")) return;
+  try {
+    if (S.me) await updateDoc(doc(db, "players", S.me.id), { uid: "" });
+    if (S.email) await signOut(auth);
+  } catch (err) { alert(friendlyError(err)); }
+});
+
+/* ==========================================================
+   7. Countdown
+   ========================================================== */
+function activeWeek() {
+  const pub = S.weeks.filter(w => w.published);
+  if (!pub.length) return null;
+  const open = pub.filter(w => !isLocked(w))
+                  .sort((a, b) => deadlineDate(a) - deadlineDate(b));
+  return open[0] || pub[pub.length - 1];
+}
+
+function renderClock() {
+  const w = activeWeek();
+  const el = $("#clock"), val = $("#clock-val"), lab = $("#clock-label");
+  el.classList.remove("locked", "soon");
+  if (!w) { lab.textContent = "Status"; val.textContent = "—"; return; }
+  const d = deadlineDate(w);
+  const ms = d ? d.getTime() - Date.now() : -1;
+  if (ms <= 0) {
+    lab.textContent = "Picks";
+    val.textContent = "LOCKED";
+    el.classList.add("locked");
+    return;
+  }
+  lab.textContent = "Picks lock in";
+  const s  = Math.floor(ms / 1000);
+  const dd = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600);
+  const mm = Math.floor(s % 3600 / 60), ss = s % 60;
+  val.textContent = dd > 0 ? `${dd}d ${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`
+                           : `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+  if (ms < 3600e3) el.classList.add("soon");
+}
+setInterval(() => {
+  if (!$("#app").hidden) { renderClock(); refreshLockState(); }
+}, 1000);
+
+let lastLocked = null;
+function refreshLockState() {
+  const w = activeWeek();
+  const locked = w ? isLocked(w) : true;
+  if (locked !== lastLocked) { lastLocked = locked; renderPicks(); }
+}
+
+/* ==========================================================
+   8. Make Picks
+   ========================================================== */
+const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4,13 9,18 20,6"/></svg>';
+
+function renderPicks() {
+  const w = activeWeek();
+  const banner = $("#picks-banner"), box = $("#games"), bar = $("#savebar");
+
+  if (!w) {
+    banner.innerHTML = "";
+    box.innerHTML = '<div class="card"><div class="empty">No week is open yet. The commissioner posts 15 games each week — check back.</div></div>';
+    bar.hidden = true; return;
+  }
+
+  const games  = liveGames(w);
+  const locked = isLocked(w);
+  const saved  = S.myPicks[w.id]?.picks || {};
+  if (S.picksLoaded && !S.draft[w.id]) S.draft[w.id] = { ...saved };
+  const draft   = locked ? saved : (S.draft[w.id] || saved);
+  const results = w.results || {};
+  const hasResults = w.scored && Object.keys(results).length > 0;
+
+  banner.innerHTML = !locked
+    ? ""
+    : hasResults
+      ? `<div class="banner"><b>${esc(w.label || "This week")} is final.</b> Your card is below with the misses marked.</div>`
+      : `<div class="banner"><b>Picks are locked.</b> Results go up once the games finish.</div>`;
+
+  box.innerHTML = games.map((g, i) => {
+    const mine = draft[g.id], res = hasResults ? results[g.id] : null;
+    const cls = res ? (mine ? (mine === res ? " correct" : " wrong") : "") : "";
+    const side = (which, team) => {
+      const on = mine === which;
+      const won  = res === which ? " won" : "";
+      const lost = res && res !== which ? " lost" : "";
+      return `<button class="side ${which}${won}${lost}" data-g="${esc(g.id)}" data-s="${which}"
+        aria-pressed="${on}" ${locked ? "disabled" : ""}>
+        <span class="box">${CHECK}</span><span class="team">${esc(team)}</span></button>`;
+    };
+    return `<div class="game${cls}">
+      <div class="game-no">${pad2(i + 1)}</div>
+      <div class="matchup">${side("away", g.away)}<div class="at">@</div>${side("home", g.home)}</div>
+    </div>`;
+  }).join("");
+
+  const n = games.filter(g => draft[g.id]).length;
+  $("#tally").innerHTML = `${n}<small>/${games.length} picked</small>`;
+  bar.hidden = false;
+  const btn = $("#save-btn");
+  btn.disabled = locked || n === 0;
+  btn.textContent = Object.keys(saved).length ? "Update picks" : "Submit picks";
+  if (locked) {
+    $("#save-status").className = "status err";
+    $("#save-status").textContent = "Locked";
+    btn.textContent = "Locked";
+  } else if (!$("#save-status").dataset.sticky) {
+    $("#save-status").className = "status";
+    $("#save-status").textContent = Object.keys(saved).length
+      ? "Saved — you can change these until the lock." : "";
+  }
+}
+
+$("#games").addEventListener("click", e => {
+  const b = e.target.closest(".side"); if (!b || b.disabled) return;
+  const w = activeWeek(); if (!w || isLocked(w)) return;
+  const d = S.draft[w.id] || (S.draft[w.id] = {});
+  d[b.dataset.g] = d[b.dataset.g] === b.dataset.s ? undefined : b.dataset.s;
+  if (!d[b.dataset.g]) delete d[b.dataset.g];
+  const st = $("#save-status");
+  st.dataset.sticky = "1"; st.className = "status"; st.textContent = "Not submitted yet";
+  renderPicks();
+});
+
+$("#save-btn").addEventListener("click", async () => {
+  const w = activeWeek(); if (!w || !S.me) return;
+  const st = $("#save-status"), btn = $("#save-btn");
+  if (isLocked(w)) { st.className = "status err"; st.textContent = "Too late — picks are locked."; return; }
+  btn.disabled = true; st.className = "status"; st.textContent = "Saving…";
+  try {
+    await setDoc(doc(db, "picks", `${w.id}__${S.me.id}`), {
+      weekId: w.id, playerId: S.me.id, uid: S.uid, name: S.me.name,
+      picks: S.draft[w.id] || {}, updatedAt: serverTimestamp()
+    });
+    delete st.dataset.sticky;
+    st.className = "status ok"; st.textContent = "Picks submitted.";
+  } catch (err) {
+    st.className = "status err"; st.textContent = friendlyError(err);
+  } finally { btn.disabled = false; }
+});
+
+/* ==========================================================
+   9. Standings
+   ========================================================== */
+function seasonRows() {
+  const scored = S.weeks.filter(w => w.scored);
+  const possible = scored.reduce((a, w) => a + (w.scoredGames || 0), 0);
+  const wins = {};
+  scored.forEach(w => {
+    const rows = S.scores.filter(s => s.weekId === w.id);
+    if (!rows.length) return;
+    const top = Math.max(...rows.map(r => r.correct));
+    rows.filter(r => r.correct === top && top > 0)
+        .forEach(r => wins[r.playerId] = (wins[r.playerId] || 0) + 1);
+  });
+  const by = {};
+  S.scores.forEach(s => {
+    if (!scored.some(w => w.id === s.weekId)) return;
+    const r = by[s.playerId] || (by[s.playerId] =
+      { playerId: s.playerId, name: s.name, correct: 0, played: 0, weeks: 0 });
+    r.correct += s.correct; r.played += s.total; r.weeks++; r.name = s.name;
+  });
+  return Object.values(by).map(r => {
+    const denom = SEASON_PCT_MODE === "all" ? possible : r.played;
+    return { ...r, wins: wins[r.playerId] || 0, denom, pct: pct(r.correct, denom) };
+  }).sort((a, b) => b.pct - a.pct || b.correct - a.correct || a.name.localeCompare(b.name));
+}
+
+function renderBoard() {
+  const rows = seasonRows();
+  const scored = S.weeks.filter(w => w.scored);
+  $("#season-note").textContent = scored.length
+    ? (SEASON_PCT_MODE === "all"
+        ? `Percentage is out of every game in all ${scored.length} scored week${scored.length > 1 ? "s" : ""} — a week you skip counts as zeros.`
+        : "Percentage counts only the weeks you submitted.")
+    : "";
+
+  $("#season-table").innerHTML = rows.length ? `<table>
+    <thead><tr><th class="rank">#</th><th>Player</th><th class="num">Weeks</th>
+      <th class="num">Wins</th><th class="num">Correct</th><th class="num">Pct</th></tr></thead>
+    <tbody>${rows.map((r, i) => `<tr class="${i === 0 ? "leader" : ""}">
+      <td class="rank">${i + 1}</td>
+      <td>${esc(r.name)}${S.me && r.playerId === S.me.id ? '<span class="you-chip">you</span>' : ""}</td>
+      <td class="num">${r.weeks}</td><td class="num">${r.wins}</td>
+      <td class="num">${r.correct}<span style="color:var(--muted)">/${r.denom}</span></td>
+      <td class="num">${fmtPct(r.correct, r.denom)}</td></tr>`).join("")}</tbody></table>`
+    : '<div class="empty">Nothing scored yet. Standings appear once the commissioner posts a week&rsquo;s results.</div>';
+
+  const sel = $("#board-week");
+  const opts = scored.slice().reverse();
+  if (!S.boardWeekId || !opts.some(w => w.id === S.boardWeekId)) S.boardWeekId = opts[0]?.id || null;
+  sel.innerHTML = opts.map(w =>
+    `<option value="${w.id}" ${w.id === S.boardWeekId ? "selected" : ""}>${esc(w.label || "Week " + w.num)}</option>`).join("");
+  sel.hidden = !opts.length;
+
+  const wk = S.scores.filter(s => s.weekId === S.boardWeekId)
+                     .sort((a, b) => b.correct - a.correct || a.name.localeCompare(b.name));
+  $("#week-table").innerHTML = wk.length ? `<table>
+    <thead><tr><th class="rank">#</th><th>Player</th><th class="num">Correct</th><th class="num">Pct</th></tr></thead>
+    <tbody>${wk.map((r, i) => `<tr class="${r.correct === wk[0].correct ? "leader" : ""}">
+      <td class="rank">${i + 1}</td>
+      <td>${esc(r.name)}${S.me && r.playerId === S.me.id ? '<span class="you-chip">you</span>' : ""}</td>
+      <td class="num">${r.correct}<span style="color:var(--muted)">/${r.total}</span></td>
+      <td class="num">${fmtPct(r.correct, r.total)}</td></tr>`).join("")}</tbody></table>`
+    : '<div class="empty">No scores for this week.</div>';
+}
+$("#board-week").addEventListener("change", e => { S.boardWeekId = e.target.value; renderBoard(); });
+
+/* ==========================================================
+   10. My Results
+   ========================================================== */
+function renderMine() {
+  if (!S.me) return;
+  const mine = S.weeks.filter(w => w.published && (S.myPicks[w.id] || w.scored))
+                      .sort((a, b) => (b.num || 0) - (a.num || 0));
+  if (!mine.length) { $("#mine-body").innerHTML = '<div class="empty">Once you submit a card it shows up here.</div>'; return; }
+
+  $("#mine-body").innerHTML = mine.map(w => {
+    const picks = S.myPicks[w.id]?.picks || {};
+    const res = w.results || {};
+    const games = liveGames(w);
+    const sc = S.scores.find(s => s.weekId === w.id && s.playerId === S.me.id);
+    const head = `<div style="display:flex;align-items:baseline;gap:10px;margin:18px 0 8px">
+        <span class="disp" style="font-size:19px;font-weight:600;letter-spacing:.05em;text-transform:uppercase">${esc(w.label || "Week " + w.num)}</span>
+        ${w.scored
+          ? `<span class="pill final">${sc ? sc.correct + " of " + sc.total : "no card"}</span>`
+          : `<span class="pill ${isLocked(w) ? "locked" : "open"}">${isLocked(w) ? "locked" : "open"}</span>`}
+        ${sc ? `<span class="hint mono">${fmtPct(sc.correct, sc.total)}</span>` : ""}
+      </div>`;
+    const rows = games.map((g, i) => {
+      const p = picks[g.id], r = w.scored ? res[g.id] : null;
+      const mark = !p ? '<span style="color:var(--muted)">no pick</span>'
+        : !r ? esc(p === "away" ? g.away : g.home)
+        : `<span style="color:var(--${p === r ? "turf" : "brick"})">${esc(p === "away" ? g.away : g.home)}</span>`;
+      return `<tr><td class="rank">${pad2(i + 1)}</td>
+        <td>${esc(g.away)} <span style="color:var(--muted)">@</span> ${esc(g.home)}</td>
+        <td style="text-align:right">${mark}</td></tr>`;
+    }).join("");
+    return head + `<div class="twrap"><table><tbody>${rows}</tbody></table></div>`;
+  }).join("");
+}
+
+/* ==========================================================
+   11. Commissioner
+   ========================================================== */
+let admKey = null;
+
+function blankWeek(num) {
+  return { num, label: "Week " + num, deadline: null,
+    games: Array.from({ length: GAMES_PER_WEEK }, (_, i) => ({ id: "g" + (i + 1), away: "", home: "" })) };
+}
+
+function renderAdmin() {
+  if (!S.isAdmin) return;
+
+  // week selector
+  const sel = $("#adm-week-sel");
+  const nextNum = (S.weeks.reduce((m, w) => Math.max(m, w.num || 0), 0) || 0) + 1;
+  if (!S.admWeekId) S.admWeekId = S.weeks[S.weeks.length - 1]?.id || "NEW";
+  sel.innerHTML = S.weeks.map(w =>
+      `<option value="${w.id}" ${w.id === S.admWeekId ? "selected" : ""}>${esc(w.label || "Week " + w.num)}${w.published ? "" : " (draft)"}</option>`).join("")
+    + `<option value="NEW" ${S.admWeekId === "NEW" ? "selected" : ""}>+ New week ${nextNum}</option>`;
+
+  const stored = S.weeks.find(w => w.id === S.admWeekId);
+
+  // rebuild the form only when the selected week changes, so typing isn't interrupted
+  if (admKey !== S.admWeekId) {
+    admKey = S.admWeekId;
+    S.admDraft = stored
+      ? { num: stored.num, label: stored.label,
+          deadline: deadlineDate(stored),
+          games: Array.from({ length: GAMES_PER_WEEK }, (_, i) =>
+            stored.games?.[i] || { id: "g" + (i + 1), away: "", home: "" }) }
+      : blankWeek(nextNum);
+    S.admResults = { ...(stored?.results || {}) };
+
+    $("#adm-num").value = S.admDraft.num;
+    $("#adm-label").value = S.admDraft.label || "";
+    $("#adm-deadline").value = toLocalInput(S.admDraft.deadline);
+    $("#adm-games").innerHTML = S.admDraft.games.map((g, i) => `
+      <div class="adm-game">
+        <span class="n">${pad2(i + 1)}</span>
+        <input data-i="${i}" data-k="away" value="${esc(g.away)}" placeholder="Away team" autocomplete="off">
+        <span class="at2">@</span>
+        <input data-i="${i}" data-k="home" value="${esc(g.home)}" placeholder="Home team" autocomplete="off">
+      </div>`).join("");
+    $("#adm-status").textContent = "";
+  }
+
+  const pubBtn = $("#adm-publish"), unpubBtn = $("#adm-unpublish");
+  pubBtn.hidden = !!stored?.published;
+  unpubBtn.hidden = !stored?.published || !!stored?.scored;
+
+  // results
+  const games = S.admDraft.games.filter(g => g.away.trim() && g.home.trim());
+  $("#adm-results").innerHTML = games.length ? games.map((g, i) => `
+    <div class="res-row"><span class="n" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)">${pad2(i + 1)}</span>
+      <div class="res-opts">
+        <button class="res-opt" data-r="${esc(g.id)}" data-v="away" aria-pressed="${S.admResults[g.id] === "away"}">${esc(g.away)}</button>
+        <button class="res-opt" data-r="${esc(g.id)}" data-v="home" aria-pressed="${S.admResults[g.id] === "home"}">${esc(g.home)}</button>
+        <button class="res-opt clear" data-r="${esc(g.id)}" data-v="" aria-pressed="${!S.admResults[g.id]}">—</button>
+      </div></div>`).join("")
+    : '<div class="empty">Add the games above first.</div>';
+
+  // everyone's picks
+  const wk = stored;
+  const wp = S.allPicks.filter(p => p.weekId === S.admWeekId)
+                       .sort((a, b) => a.name.localeCompare(b.name));
+  $("#adm-grid").innerHTML = (wk && games.length && wp.length) ? `<table>
+    <thead><tr><th>Player</th>${games.map((_, i) => `<th class="num">${i + 1}</th>`).join("")}<th class="num">Right</th></tr></thead>
+    <tbody>${wp.map(p => {
+      let c = 0;
+      const cells = games.map(g => {
+        const v = p.picks?.[g.id], r = wk.results?.[g.id];
+        if (!v) return '<td class="num" style="color:var(--muted)">·</td>';
+        const short = (v === "away" ? g.away : g.home).slice(0, 4);
+        if (!r) return `<td class="num">${esc(short)}</td>`;
+        if (v === r) c++;
+        return `<td class="num" style="color:var(--${v === r ? "turf" : "brick"})">${esc(short)}</td>`;
+      }).join("");
+      const hasRes = wk.results && Object.keys(wk.results).length > 0;
+      return `<tr><td>${esc(p.name)}</td>${cells}<td class="num"><b>${hasRes ? c : "—"}</b></td></tr>`;
+    }).join("")}</tbody></table>`
+    : '<div class="empty">No cards submitted for this week yet.</div>';
+
+  // roster
+  $("#adm-roster").innerHTML = S.players.length ? `<table>
+    <thead><tr><th>Player</th><th>Device</th><th></th></tr></thead>
+    <tbody>${S.players.map(p => `<tr>
+      <td>${esc(p.name)}</td>
+      <td><span class="pill ${p.uid ? "open" : "draft"}">${p.uid ? "claimed" : "unclaimed"}</span></td>
+      <td style="text-align:right">
+        <button class="btn ghost sm" data-reset="${esc(p.id)}">Reset</button>
+        <button class="btn danger sm" data-del="${esc(p.id)}">Remove</button></td></tr>`).join("")}</tbody></table>`
+    : '<div class="empty">Nobody has joined yet.</div>';
+}
+
+/* ---- commissioner: form wiring ---- */
+$("#adm-week-sel").addEventListener("change", e => { S.admWeekId = e.target.value; renderAdmin(); });
+$("#adm-games").addEventListener("input", e => {
+  const el = e.target; if (!el.dataset.k) return;
+  S.admDraft.games[+el.dataset.i][el.dataset.k] = el.value;
+  renderAdmin();
+});
+$("#adm-num").addEventListener("input", e => { S.admDraft.num = +e.target.value || 1; });
+$("#adm-label").addEventListener("input", e => { S.admDraft.label = e.target.value; });
+$("#adm-deadline").addEventListener("input", e => {
+  S.admDraft.deadline = e.target.value ? new Date(e.target.value) : null;
+});
+$("#adm-results").addEventListener("click", e => {
+  const b = e.target.closest("[data-r]"); if (!b) return;
+  if (b.dataset.v) S.admResults[b.dataset.r] = b.dataset.v;
+  else delete S.admResults[b.dataset.r];
+  renderAdmin();
+});
+
+function admWeekPayload() {
+  const num = +$("#adm-num").value || 1;
+  return { id: weekId(num), num,
+    label: $("#adm-label").value.trim() || "Week " + num,
+    deadline: S.admDraft.deadline ? Timestamp.fromDate(S.admDraft.deadline) : null,
+    games: S.admDraft.games.map(g => ({ id: g.id, away: g.away.trim(), home: g.home.trim() })) };
+}
+function admSay(msg, kind = "") { const el = $("#adm-status"); el.className = "status " + kind; el.textContent = msg; }
+
+async function saveWeek(extra = {}) {
+  const p = admWeekPayload();
+  await setDoc(doc(db, "weeks", p.id), { ...p, ...extra }, { merge: true });
+  if (S.admWeekId !== p.id) { S.admWeekId = p.id; admKey = null; }
+  return p;
+}
+
+$("#adm-save").addEventListener("click", async () => {
+  admSay("Saving…");
+  try { const p = await saveWeek(); admSay(`${p.label} saved as a draft.`, "ok"); }
+  catch (e) { admSay(friendlyError(e), "err"); }
+});
+
+$("#adm-publish").addEventListener("click", async () => {
+  const p = admWeekPayload();
+  const n = p.games.filter(g => g.away && g.home).length;
+  if (!p.deadline) { admSay("Set the lock time before publishing.", "err"); return; }
+  if (!n) { admSay("Add at least one game before publishing.", "err"); return; }
+  if (n < GAMES_PER_WEEK && !confirm(`Only ${n} of ${GAMES_PER_WEEK} games are filled in. Publish anyway?`)) return;
+  admSay("Publishing…");
+  try {
+    await saveWeek({ published: true });
+    admSay(`${p.label} is live — ${n} games, locking ${S.admDraft.deadline.toLocaleString()}.`, "ok");
+  } catch (e) { admSay(friendlyError(e), "err"); }
+});
+
+$("#adm-unpublish").addEventListener("click", async () => {
+  if (!confirm("Hide this week from players again?")) return;
+  try { await updateDoc(doc(db, "weeks", S.admWeekId), { published: false }); admSay("Unpublished.", "ok"); }
+  catch (e) { admSay(friendlyError(e), "err"); }
+});
+
+$("#adm-score").addEventListener("click", async () => {
+  const st = $("#adm-score-status");
+  const week = S.weeks.find(w => w.id === S.admWeekId);
+  if (!week) { st.className = "status err"; st.textContent = "Save the week first."; return; }
+  const games = liveGames({ games: S.admDraft.games });
+  const decided = games.filter(g => S.admResults[g.id]);
+  if (!decided.length) { st.className = "status err"; st.textContent = "Tap a winner for at least one game."; return; }
+  if (decided.length < games.length &&
+      !confirm(`${games.length - decided.length} game(s) have no winner yet. They'll be left out of this week's score. Post anyway?`)) return;
+
+  st.className = "status"; st.textContent = "Posting…";
+  try {
+    const cards = S.allPicks.filter(p => p.weekId === week.id);
+    const batch = writeBatch(db);
+    cards.forEach(p => {
+      const correct = decided.reduce((a, g) => a + (p.picks?.[g.id] === S.admResults[g.id] ? 1 : 0), 0);
+      batch.set(doc(db, "scores", `${week.id}__${p.playerId}`), {
+        weekId: week.id, playerId: p.playerId, name: p.name,
+        correct, total: decided.length
+      });
+    });
+    batch.set(doc(db, "weeks", week.id), {
+      results: S.admResults, scored: true, scoredGames: decided.length
+    }, { merge: true });
+    await batch.commit();
+    st.className = "status ok";
+    st.textContent = `Scored ${cards.length} card${cards.length === 1 ? "" : "s"} over ${decided.length} games. Standings are live.`;
+  } catch (e) { st.className = "status err"; st.textContent = friendlyError(e); }
+});
+
+$("#adm-roster").addEventListener("click", async e => {
+  const reset = e.target.closest("[data-reset]"), del = e.target.closest("[data-del]");
+  try {
+    if (reset) {
+      const p = S.players.find(x => x.id === reset.dataset.reset);
+      if (p && confirm(`Release "${p.name}" so they can claim it on a new device?`))
+        await updateDoc(doc(db, "players", p.id), { uid: "" });
+    } else if (del) {
+      const p = S.players.find(x => x.id === del.dataset.del);
+      if (p && confirm(`Remove "${p.name}" from the roster? Their submitted cards stay in the standings.`))
+        await deleteDoc(doc(db, "players", p.id));
+    }
+  } catch (err) { alert(friendlyError(err)); }
+});
+
+/* ==========================================================
+   12. Shell
+   ========================================================== */
+$$(".tab").forEach(t => t.addEventListener("click", () => {
+  S.view = t.dataset.view;
+  render();
+}));
+
+function render() {
+  if (!S.ready) return;
+
+  if (!S.me) {
+    $("#app").hidden = true;
+    $("#gate").hidden = false;
+    renderGate();
+    return;
+  }
+  $("#gate").hidden = true;
+  $("#app").hidden = false;
+
+  const w = activeWeek();
+  $("#league-name").textContent = LEAGUE_NAME;
+  $("#week-label").textContent = w
+    ? `${w.label || "Week " + w.num}${w.scored ? " · final" : isLocked(w) ? " · locked" : ""}`
+    : "No week open";
+  $("#me-name").textContent = S.me.name + (S.isAdmin ? " · commissioner" : "");
+  $("#tab-admin").hidden = !S.isAdmin;
+  if (!S.isAdmin && S.view === "admin") S.view = "picks";
+
+  $$(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === S.view)));
+  ["picks", "board", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
+
+  renderClock();
+  if (S.view === "picks") renderPicks();
+  if (S.view === "board") renderBoard();
+  if (S.view === "mine")  renderMine();
+  if (S.view === "admin") renderAdmin();
+}
+
+$("#gate-eyebrow").textContent = "High school football pool";
+</script>
+</body>
+</html>
