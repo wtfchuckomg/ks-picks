@@ -104,6 +104,35 @@ box, so this works before you deploy anything.
 5. After the games, **Enter results** → tap each winner → **Post scores**.
    Standings update instantly for everybody.
 
+## If you mess up
+
+Almost nothing is permanent. Working from least to most drastic:
+
+| What went wrong | Fix |
+|---|---|
+| Typo in a team name | Fix the text, **Save week**. Picks stay attached — they're stored per game slot, not per team name. |
+| Wrong lock time | Change it and **Save week**. Works after publishing too. If it already locked, setting a later time reopens it. |
+| Published before you were ready | **Unpublish** — hides it from players again. Available until the week is scored. |
+| Entered the wrong winner | Tap the right one and **Post scores** again. It overwrites the results and everyone's scores. No need to clear anything. |
+| Scored too early | Same as above — fix the winners and post again. |
+| Someone claimed the wrong name | Roster → **Reset**, then they claim the right one. |
+| Everything is a mess | **Clear all picks** — see below. |
+
+**Clear all picks** deletes every submitted card for that week, removes its
+scores from the standings, and clears the winners you entered. The games and
+the lock time stay, so the week is immediately open for picking again. It
+tells you exactly what it's about to delete before it does anything.
+
+This is the one action that can't be undone. Everything else in the table
+above is just editing.
+
+**One thing to be careful about:** picks are stored against slot numbers
+(game 1, game 2, ...), not team names. Fixing a spelling is safe. But if you
+*reorder* the games or swap in a different matchup after people have already
+picked, their picks stay on the slot and will now point at the wrong team.
+If you need to reshuffle a slate that people have picked, clear the week
+first.
+
 ## What's actually enforced (not just hidden)
 
 - **The lock is server-side.** A pick write is rejected unless the server's own
