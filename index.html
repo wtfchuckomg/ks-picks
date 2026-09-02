@@ -329,6 +329,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
             <div class="shrink"><button class="btn" id="adm-save">Save week</button></div>
             <div class="shrink"><button class="btn lamp" id="adm-publish">Publish to players</button></div>
             <div class="shrink"><button class="btn ghost" id="adm-unpublish">Unpublish</button></div>
+            <div class="shrink"><button class="btn danger" id="adm-clear">Clear all picks</button></div>
             <span class="status shrink" id="adm-status" style="flex:1 1 100%"></span>
           </div>
         </div>
@@ -1006,6 +1007,39 @@ $("#adm-score").addEventListener("click", async () => {
     st.className = "status ok";
     st.textContent = `Scored ${cards.length} card${cards.length === 1 ? "" : "s"} over ${decided.length} games. Standings are live.`;
   } catch (e) { st.className = "status err"; st.textContent = friendlyError(e); }
+});
+
+$("#adm-clear").addEventListener("click", async () => {
+  const week = S.weeks.find(w => w.id === S.admWeekId);
+  if (!week) { admSay("Save the week first — there's nothing to clear.", "err"); return; }
+  const cards  = S.allPicks.filter(p => p.weekId === week.id);
+  const scores = S.scores.filter(s => s.weekId === week.id);
+  const label  = week.label || "Week " + week.num;
+  const wins   = Object.keys(week.results || {}).length;
+  const local  = Object.keys(S.admResults || {}).length;
+  if (!cards.length && !scores.length && !wins && !local && !week.scored) {
+    admSay(`${label} is already clear — no cards, scores or winners.`, "ok"); return;
+  }
+  if (!confirm(
+    `Clear ${label}?\n\n` +
+    `\u2022 ${cards.length} submitted card${cards.length === 1 ? "" : "s"} will be deleted\n` +
+    `\u2022 ${scores.length} score${scores.length === 1 ? "" : "s"} will be removed from the standings\n` +
+    `\u2022 ${Math.max(wins, local)} entered winner${Math.max(wins, local) === 1 ? "" : "s"} will be cleared\n\n` +
+    `The games and the lock time stay. Everyone will need to pick again.\n` +
+    `This cannot be undone.`)) return;
+
+  admSay("Clearing\u2026");
+  try {
+    const batch = writeBatch(db);
+    cards.forEach(p  => batch.delete(doc(db, "picks",  p.id)));
+    scores.forEach(s => batch.delete(doc(db, "scores", s.id)));
+    batch.set(doc(db, "weeks", week.id),
+      { results: {}, scored: false, scoredGames: 0 }, { merge: true });
+    await batch.commit();
+    S.admResults = {};
+    delete S.draft[week.id];
+    admSay(`Cleared ${label}. ${cards.length} card${cards.length === 1 ? "" : "s"} deleted \u2014 the week is open for picks again.`, "ok");
+  } catch (e) { admSay(friendlyError(e), "err"); }
 });
 
 $("#adm-roster").addEventListener("click", async e => {
