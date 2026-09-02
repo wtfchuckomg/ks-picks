@@ -4,114 +4,124 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Friday Night Picks</title>
+<title>Kansas Media Pick ’ems</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
 :root{
-  --ground:#FFFFFF; --surface:#F7F7F7; --surface-2:#EFEFEF;
-  --ink:#1A1A1A; --muted:#6B6B6B; --line:#E2E2E2; --line-2:#EDEDED;
-  --nav:#1A1A1A; --nav-ink:#FFFFFF; --nav-muted:#9E9E9E; --nav-line:#333333;
-  --accent:#D50A0A; --accent-ink:#FFFFFF; --accent-wash:#FCEAEA;
-  --win:#137333; --loss:#C5221F;
+  --ground:#FFFFFF; --surface:#F4F5F6; --surface-2:#EAECEE;
+  --ink:#0E1013; --muted:#666E78; --line:#D8DCE0; --line-2:#EAECEE;
+  --nav:#111417; --nav-ink:#FFFFFF; --nav-muted:#9AA2AB; --nav-line:#2A2F35;
+  --accent:#D50A0A; --accent-ink:#FFFFFF; --accent-wash:#FBEDED;
+  --win:#0F7A34; --loss:#C0271F;
   color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --ground:#0B0B0B; --surface:#161616; --surface-2:#1E1E1E;
-    --ink:#F2F2F2; --muted:#9A9A9A; --line:#2B2B2B; --line-2:#232323;
-    --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#9A9A9A; --nav-line:#2B2B2B;
-    --accent:#E82127; --accent-ink:#FFFFFF; --accent-wash:#2A1112;
-    --win:#4BC26B; --loss:#F0655E;
+    --ground:#0A0C0E; --surface:#14171A; --surface-2:#1C2024;
+    --ink:#EDEFF2; --muted:#8B939C; --line:#262B31; --line-2:#1C2024;
+    --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#8B939C; --nav-line:#262B31;
+    --accent:#E8262C; --accent-ink:#FFFFFF; --accent-wash:#26100F;
+    --win:#3FBE68; --loss:#EE6257;
   }
 }
 :root[data-theme="dark"]{
-  --ground:#0B0B0B; --surface:#161616; --surface-2:#1E1E1E;
-  --ink:#F2F2F2; --muted:#9A9A9A; --line:#2B2B2B; --line-2:#232323;
-  --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#9A9A9A; --nav-line:#2B2B2B;
-  --accent:#E82127; --accent-ink:#FFFFFF; --accent-wash:#2A1112;
-  --win:#4BC26B; --loss:#F0655E;
+  --ground:#0A0C0E; --surface:#14171A; --surface-2:#1C2024;
+  --ink:#EDEFF2; --muted:#8B939C; --line:#262B31; --line-2:#1C2024;
+  --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#8B939C; --nav-line:#262B31;
+  --accent:#E8262C; --accent-ink:#FFFFFF; --accent-wash:#26100F;
+  --win:#3FBE68; --loss:#EE6257;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{
-  background:var(--ground); color:var(--ink);
-  font:400 15px/1.45 Barlow,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
-h1,h2,h3,.disp{font-family:"Barlow Condensed",Barlow,"Arial Narrow",sans-serif;text-wrap:balance;margin:0}
+body{background:var(--ground);color:var(--ink);
+  font:400 14px/1.4 Barlow,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3,.disp{font-family:"Barlow Condensed",Barlow,"Arial Narrow",sans-serif;margin:0;text-wrap:balance}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .num,.mono{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-/* ---------- top chrome (dark in both themes, like ESPN) ---------- */
-.board{position:sticky;top:0;z-index:40;background:var(--nav);color:var(--nav-ink);
-  border-bottom:3px solid var(--accent)}
-.board-inner{max-width:940px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{display:flex;flex-direction:column;gap:0;margin-right:auto}
-.brand-name{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:25px;
-  letter-spacing:.02em;text-transform:uppercase;line-height:1.02}
-.brand-sub{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--nav-muted);font-weight:600;margin-top:2px}
-.clock{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
-.clock-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--nav-muted);font-weight:600}
-.clock-val{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;
-  font-variant-numeric:tabular-nums;line-height:1;letter-spacing:.01em}
-.clock.locked .clock-val{color:var(--accent)}
-.clock.soon .clock-val{color:#FFC107}
+/* ---------- masthead ---------- */
+.board{position:sticky;top:0;z-index:40;background:var(--nav);color:var(--nav-ink)}
+.board-inner{max-width:1100px;margin:0 auto;padding:9px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:9px}
+.brand-name{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;
+  text-transform:uppercase;line-height:1;letter-spacing:-.005em}
+.brand-sub{font-size:11px;text-transform:uppercase;color:var(--nav-muted);font-weight:600;
+  border-left:1px solid var(--nav-line);padding-left:9px;letter-spacing:.02em}
+.weekchip{margin-right:auto;font-family:"Barlow Condensed",sans-serif;font-weight:600;
+  font-size:13px;text-transform:uppercase;color:var(--nav-ink);
+  border:1px solid var(--nav-line);padding:2px 8px;letter-spacing:.02em}
+.clock{display:flex;align-items:baseline;gap:7px}
+.clock-label{font-size:10px;text-transform:uppercase;color:var(--nav-muted);font-weight:600;letter-spacing:.03em}
+.clock-val{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;
+  font-variant-numeric:tabular-nums;line-height:1}
+.clock.locked .clock-val{color:#FF5A52}
+.clock.soon .clock-val{color:#FFC53D}
 .whoami{display:flex;align-items:center;gap:8px;font-size:13px;
   border-left:1px solid var(--nav-line);padding-left:14px}
 .whoami b{font-weight:600}
-.linkish{background:none;border:0;padding:0;color:var(--nav-muted);font-size:12px;
+.linkish{background:none;border:0;padding:0;color:var(--nav-muted);font-size:11px;
   text-decoration:underline;text-underline-offset:2px}
 .linkish:hover{color:var(--nav-ink)}
 
-/* ---------- tab strip ---------- */
-nav.tabs{background:var(--ground);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
-nav.tabs{max-width:none;margin:0;padding:0;display:block;white-space:nowrap;overflow-x:auto}
-.tabs-inner{max-width:940px;margin:0 auto;padding:0 16px;display:flex;gap:0}
-.tab{background:none;border:0;border-bottom:3px solid transparent;padding:12px 16px;
-  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-radius:0}
-.tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+/* ---------- nav strip ---------- */
+nav.tabs{background:var(--nav);border-bottom:1px solid var(--nav-line);
+  position:sticky;top:0;z-index:30;white-space:nowrap;overflow-x:auto}
+.tabs-inner{max-width:1100px;margin:0 auto;padding:0 18px;display:flex}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px 7px;
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;
+  text-transform:uppercase;color:var(--nav-muted);border-radius:0;letter-spacing:.01em}
+.tab:hover{color:var(--nav-ink)}
+.tab[aria-selected="true"]{color:var(--nav-ink);border-bottom-color:var(--accent)}
 
-main{max-width:940px;margin:0 auto;padding:18px 16px 90px}
+main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .view[hidden]{display:none!important}
 
-/* ---------- cards ---------- */
-.card{background:var(--ground);border:1px solid var(--line);border-radius:3px}
-.card+.card{margin-top:14px}
-.card-hd{padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface);
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative}
-.card-hd::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
-.card-hd h2{font-size:19px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding-left:6px}
-.card-bd{padding:14px}
-.hint{color:var(--muted);font-size:13px;margin:0}
-.eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+/* ---------- section headings (rule, not rail) ---------- */
+.card{background:none;border:0;border-radius:0}
+.card+.card{margin-top:30px}
+.card-hd{padding:0 0 5px;margin-bottom:11px;background:none;
+  border-bottom:2px solid var(--ink);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card-hd h2{font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:-.005em}
+.card-bd{padding:0}
+.hint{color:var(--muted);font-size:12px;margin:0}
+.eyebrow{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:700;letter-spacing:.04em}
 
-/* ---------- scoreboard game cards ---------- */
-.games{display:flex;flex-direction:column;gap:10px}
-.game{border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--ground)}
-.ghd{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;
-  background:var(--surface);border-bottom:1px solid var(--line);
-  font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+/* ---------- two-column ---------- */
+.pcols{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:30px;align-items:start}
+@media (max-width:900px){.pcols{grid-template-columns:1fr;gap:26px}}
+.prail .rail-hd{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;
+  text-transform:uppercase;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-bottom:8px}
+.prail table{font-size:13px}
+.prail td{padding:5px 7px}
+.railnote{font-size:12px;color:var(--muted);padding:6px 0}
+.myline{display:flex;justify-content:space-between;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.myline b{font-family:"Barlow Condensed",sans-serif;font-size:17px;font-variant-numeric:tabular-nums}
+
+/* ---------- scoreboard list ---------- */
+.games{border-top:1px solid var(--line)}
+.game{border-bottom:1px solid var(--line)}
+.ghd{display:flex;align-items:center;justify-content:space-between;padding:5px 2px 3px;
+  font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.04em}
 .gstatus{color:var(--accent)}
-.prow{width:100%;background:none;border:0;border-top:1px solid var(--line-2);
-  padding:11px 12px;display:flex;align-items:center;gap:11px;text-align:left;
-  border-left:4px solid transparent;transition:background .1s ease}
-.prow:first-of-type{border-top:0}
+.prow{width:100%;background:none;border:0;padding:7px 8px;display:flex;align-items:center;gap:10px;
+  text-align:left;border-left:3px solid transparent}
 .prow:hover:not(:disabled){background:var(--surface)}
 .prow:disabled{cursor:default}
-.chip{flex:0 0 40px;height:28px;border-radius:2px;background:var(--surface-2);
-  display:grid;place-items:center;font-family:"Barlow Condensed",sans-serif;
-  font-weight:700;font-size:14px;letter-spacing:.04em;color:var(--muted)}
-.team{flex:1 1 auto;font-weight:500;font-size:16px;line-height:1.2}
-.tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
-.ck{flex:0 0 20px;width:20px;height:20px;border:2px solid var(--line);border-radius:2px;
-  display:grid;place-items:center}
-.ck::after{content:"";width:9px;height:5px;border-left:2.5px solid var(--accent-ink);
+.chip{flex:0 0 36px;height:26px;background:var(--surface-2);display:grid;place-items:center;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:13px;color:var(--muted)}
+.chip.logo{background:none}
+.chip.logo img{width:26px;height:26px;object-fit:contain;display:block}
+.prow.on .chip.logo{background:none}
+.team{flex:1 1 auto;font-weight:500;font-size:15px;line-height:1.2}
+.tag{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.03em}
+.ck{flex:0 0 18px;width:18px;height:18px;border:2px solid var(--line);display:grid;place-items:center}
+.ck::after{content:"";width:8px;height:4px;border-left:2.5px solid var(--accent-ink);
   border-bottom:2.5px solid var(--accent-ink);transform:rotate(-45deg) translate(1px,-1px);opacity:0}
 .prow.on{background:var(--accent-wash);border-left-color:var(--accent)}
 .prow.on .team{font-weight:700}
@@ -119,100 +129,96 @@ main{max-width:940px;margin:0 auto;padding:18px 16px 90px}
 .prow.on .ck{background:var(--accent);border-color:var(--accent)}
 .prow.on .ck::after{opacity:1}
 .prow.won .team{color:var(--win)}
-.prow.won .tag::after{content:" · W";color:var(--win)}
 .prow.on.miss .team{color:var(--loss)}
 .prow.on.miss .chip,.prow.on.miss .ck{background:var(--loss);border-color:var(--loss)}
-.prow.on.miss{background:transparent;border-left-color:var(--loss)}
+.prow.on.miss{background:none;border-left-color:var(--loss)}
 
 /* ---------- submit bar ---------- */
-.savebar{position:sticky;bottom:0;margin-top:14px;background:var(--nav);color:var(--nav-ink);
-  border-radius:3px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.tally{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;
-  letter-spacing:.03em;text-transform:uppercase;margin-right:auto;font-variant-numeric:tabular-nums}
-.tally small{color:var(--nav-muted);font-weight:600;font-size:13px}
-.status{font-size:13px;color:var(--nav-muted)}
-.status.ok{color:#4BC26B}
+.savebar{position:sticky;bottom:0;margin-top:0;background:var(--nav);color:var(--nav-ink);
+  padding:9px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tally{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;
+  text-transform:uppercase;margin-right:auto;font-variant-numeric:tabular-nums}
+.tally small{color:var(--nav-muted);font-weight:600;font-size:12px}
+.status{font-size:12px;color:var(--nav-muted)}
+.status.ok{color:#3FBE68}
 .status.err{color:#FF6B63}
 
 /* ---------- buttons ---------- */
 .btn{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);
-  padding:8px 18px;border-radius:3px;font-weight:700;font-size:13px;
-  letter-spacing:.08em;text-transform:uppercase}
+  padding:7px 15px;border-radius:2px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 .btn:hover:not(:disabled){filter:brightness(1.1)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn.ghost{background:none;color:var(--ink);border-color:var(--line)}
 .btn.ghost:hover:not(:disabled){border-color:var(--ink);filter:none}
 .btn.lamp{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.danger{background:none;color:var(--loss);border-color:var(--line)}
-.btn.sm{padding:5px 11px;font-size:11px}
+.btn.sm{padding:4px 9px;font-size:11px}
 .savebar .btn.ghost{color:var(--nav-ink);border-color:var(--nav-line)}
 
 /* ---------- tables ---------- */
 .twrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th{text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:13px;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
-  padding:7px 10px;background:var(--surface);border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;
+  text-transform:uppercase;color:var(--muted);letter-spacing:.03em;
+  padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
 tbody tr:nth-child(even) td{background:var(--surface)}
-tbody tr:last-child td{border-bottom:0}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.rank{color:var(--muted);width:32px;font-weight:600;font-variant-numeric:tabular-nums}
+.rank{color:var(--muted);width:26px;font-weight:700;font-variant-numeric:tabular-nums}
 tbody tr.leader td{background:var(--accent-wash)}
-tr.leader .rank{color:var(--accent);font-weight:700}
-.you-chip{font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
-  background:var(--accent);color:var(--accent-ink);padding:2px 6px;border-radius:2px;margin-left:6px}
+tr.leader .rank{color:var(--accent)}
+.you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
+  color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
 
 /* ---------- forms ---------- */
-label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-input,select{font:inherit;font-size:15px;font-weight:400;text-transform:none;letter-spacing:0;
-  color:var(--ink);padding:8px 10px;border:1px solid var(--line);border-radius:3px;
+label.f{display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:700;
+  text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+input,select{font:inherit;font-size:14px;font-weight:400;text-transform:none;letter-spacing:0;
+  color:var(--ink);padding:6px 9px;border:1px solid var(--line);border-radius:2px;
   background:var(--ground);width:100%}
 input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.row>*{flex:1 1 180px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}
+.row>*{flex:1 1 170px}
 .row>.shrink{flex:0 0 auto}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.pill{display:inline-block;font-size:9px;letter-spacing:.11em;text-transform:uppercase;
-  font-weight:700;padding:3px 8px;border-radius:2px;border:1px solid var(--line);color:var(--muted)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pill{display:inline-block;font-size:9px;text-transform:uppercase;font-weight:700;
+  padding:2px 6px;border:1px solid var(--line);color:var(--muted);letter-spacing:.03em}
 .pill.open{color:var(--win);border-color:var(--win)}
 .pill.locked{color:var(--accent);border-color:var(--accent)}
 .pill.final{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 
 /* ---------- gate ---------- */
-.gate{max-width:430px;margin:7vh auto;padding:0 16px}
-.gate .card-bd{display:flex;flex-direction:column;gap:13px}
-.gate h1{font-size:34px;letter-spacing:.01em;text-transform:uppercase;font-weight:700;line-height:1}
-.roster-list{display:flex;flex-wrap:wrap;gap:6px}
+.gate{max-width:400px;margin:9vh auto;padding:0 18px}
+.gate .card-bd{display:flex;flex-direction:column;gap:12px}
+.gate h1{font-size:30px;text-transform:uppercase;font-weight:700;line-height:1;letter-spacing:-.01em}
+.roster-list{display:flex;flex-wrap:wrap;gap:5px}
 .roster-btn{background:var(--surface);border:1px solid var(--line);border-radius:2px;
-  padding:7px 13px;font-size:14px;font-weight:600}
+  padding:6px 12px;font-size:14px;font-weight:600}
 .roster-btn:hover{border-color:var(--accent);color:var(--accent)}
-.sep{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:10px;
-  letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.sep{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:10px;
+  text-transform:uppercase;font-weight:700;letter-spacing:.05em}
 .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
-.err{color:var(--loss);font-size:13px;min-height:18px}
-.empty{color:var(--muted);font-size:14px;text-align:center;padding:26px 12px}
-.banner{background:var(--accent-wash);border-left:4px solid var(--accent);border-radius:2px;
-  padding:10px 13px;font-size:13px;margin-bottom:13px}
-.adm-game{display:grid;grid-template-columns:24px 1fr 16px 1fr;gap:7px;align-items:center;margin-bottom:6px}
-.adm-game .n{font-size:12px;color:var(--muted);text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
-.adm-game .at2{text-align:center;color:var(--muted);font-size:11px}
-.res-row{display:grid;grid-template-columns:24px 1fr;gap:7px;align-items:center;margin-bottom:6px}
-.res-opts{display:grid;grid-template-columns:1fr 1fr 56px;gap:5px}
+.err{color:var(--loss);font-size:13px;min-height:17px}
+.empty{color:var(--muted);font-size:13px;padding:20px 0}
+.banner{background:var(--accent-wash);border-left:3px solid var(--accent);
+  padding:9px 12px;font-size:13px;margin-bottom:12px}
+.adm-game{display:grid;grid-template-columns:22px 1fr 14px 1fr;gap:6px;align-items:center;margin-bottom:5px}
+.adm-game .n{font-size:11px;color:var(--muted);text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.adm-game .at2{text-align:center;color:var(--muted);font-size:10px}
+.res-row{display:grid;grid-template-columns:22px 1fr;gap:6px;align-items:center;margin-bottom:5px}
+.res-opts{display:grid;grid-template-columns:1fr 1fr 50px;gap:4px}
 .res-opt{background:var(--surface);border:1px solid var(--line);border-radius:2px;
-  padding:7px 9px;font-size:13px;font-weight:500;text-align:center;overflow:hidden;text-overflow:ellipsis}
+  padding:6px 8px;font-size:12.5px;font-weight:500;text-align:center;overflow:hidden;text-overflow:ellipsis}
 .res-opt[aria-pressed="true"]{background:var(--win);border-color:var(--win);color:#fff;font-weight:700}
 .res-opt.clear[aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
 @media (max-width:560px){
-  .savebar{row-gap:4px;padding:10px 12px}
+  .savebar{row-gap:4px;padding:9px 10px}
   .savebar .status{order:3;flex:1 1 100%}
   .savebar .btn{order:2}
-  .brand-name{font-size:21px}
-  .clock-val{font-size:20px}
-  .team{font-size:15px}
+  .brand-name{font-size:20px}
+  .clock-val{font-size:18px}
   .grid-2{grid-template-columns:1fr}
-  .adm-game{grid-template-columns:20px 1fr;gap:5px}
+  .adm-game{grid-template-columns:18px 1fr;gap:4px}
   .adm-game .at2{display:none}
 }
 </style>
@@ -224,8 +230,8 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   <div class="card">
     <div class="card-bd">
       <div>
-        <div class="eyebrow" id="gate-eyebrow">High School Football Pool</div>
-        <h1 id="gate-title">Friday Night Picks</h1>
+        <div class="eyebrow" id="gate-eyebrow">Kansas</div>
+        <h1 id="gate-title">Kansas Media High School Pick &rsquo;ems</h1>
       </div>
       <p class="hint">Tap your name to start picking. No password, no account &mdash; just claim your name once on this device.</p>
       <div>
@@ -249,9 +255,10 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   <header class="board">
     <div class="board-inner">
       <div class="brand">
-        <span class="brand-name" id="league-name">Friday Night Picks</span>
-        <span class="brand-sub" id="week-label">No week open</span>
+        <span class="brand-name" id="brand-name">Kansas Media</span>
+        <span class="brand-sub" id="brand-kicker">High School Pick &rsquo;ems</span>
       </div>
+      <span class="weekchip" id="week-label">No week open</span>
       <div class="clock" id="clock">
         <span class="clock-label" id="clock-label">Picks lock in</span>
         <span class="clock-val" id="clock-val">&mdash;</span>
@@ -275,12 +282,17 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   <main>
     <!-- ---- PICKS ---- -->
     <section class="view" id="view-picks">
-      <div id="picks-banner"></div>
-      <div class="games" id="games"></div>
-      <div class="savebar" id="savebar" hidden>
-        <span class="tally" id="tally">0<small>/0 picked</small></span>
-        <span class="status" id="save-status"></span>
-        <button class="btn lamp" id="save-btn">Submit picks</button>
+      <div class="pcols">
+        <div class="pmain">
+          <div id="picks-banner"></div>
+          <div class="games" id="games"></div>
+          <div class="savebar" id="savebar" hidden>
+            <span class="tally" id="tally">0<small>/0 picked</small></span>
+            <span class="status" id="save-status"></span>
+            <button class="btn lamp" id="save-btn">Submit picks</button>
+          </div>
+        </div>
+        <aside class="prail" id="prail"></aside>
       </div>
     </section>
 
@@ -352,6 +364,17 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
+        <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that.</span></div>
+        <div class="card-bd">
+          <div class="row" style="margin-bottom:12px">
+            <label class="f">Add a team<input id="team-new" type="text" placeholder="Team name" autocomplete="off"></label>
+            <div class="shrink"><button class="btn ghost" id="team-add">Add</button></div>
+          </div>
+          <div class="twrap" id="adm-teams"></div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-hd"><h2>Roster</h2><span class="hint">Reset a player if they need to re-claim their name on a new phone.</span></div>
         <div class="card-bd twrap" id="adm-roster"></div>
       </div>
@@ -378,7 +401,9 @@ const firebaseConfig = {
 // Google accounts allowed to run the pool. Must match firestore.rules.
 const ADMIN_EMAILS = ["chuck8303@gmail.com"];
 
-const LEAGUE_NAME     = "Friday Night Picks";
+const BRAND_NAME      = "Kansas Media";
+const BRAND_KICKER    = "High School Pick \u2019ems";
+const LEAGUE_NAME     = "Kansas Media High School Pick \u2019ems";
 const GAMES_PER_WEEK  = 15;
 
 // "all"    — season % counts every game of every scored week, so a week
@@ -413,6 +438,13 @@ const weekId = n => "w" + pad2(n);
 const slug   = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
                      .replace(/^-|-$/g, "").slice(0, 40);
 const pct = (c, t) => t > 0 ? (c / t * 100) : 0;
+const team = name => S.teams.find(t => t.id === slug(name)) || null;
+const safeColor = c => /^#[0-9A-Fa-f]{3,8}$/.test(String(c || "")) ? c : null;
+function crest(name) {
+  const t = team(name), c = safeColor(t && t.color);
+  if (t && t.logo) return `<span class="chip logo"><img src="${esc(t.logo)}" alt="" loading="lazy"></span>`;
+  return `<span class="chip"${c ? ` style="background:${c};color:#fff"` : ""}>${esc(mono(name))}</span>`;
+}
 const mono = s => { const w = String(s).replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
   return (w.length > 1 ? w.slice(0, 3).map(x => x[0]).join("")
                        : String(s).replace(/[^A-Za-z0-9]/g, "").slice(0, 3)).toUpperCase(); };
@@ -449,7 +481,7 @@ function friendlyError(e) {
 const S = {
   uid: null, email: null, isAdmin: false,
   me: null,                  // my player doc
-  players: [], weeks: [], scores: [],
+  players: [], weeks: [], scores: [], teams: [],
   myPicks: {}, picksLoaded: false,   // weekId -> pick doc
   allPicks: [],              // admin only
   view: "picks",
@@ -487,6 +519,12 @@ function subscribe() {
     S.ready = true;
     render();
   }, err => showFatal(err)));
+
+  unsubs.push(onSnapshot(collection(db, "teams"), snap => {
+    S.teams = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+    render();
+  }, err => console.warn("teams:", err)));
 
   unsubs.push(onSnapshot(collection(db, "weeks"), snap => {
     S.weeks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -666,7 +704,7 @@ function renderPicks() {
                    res && res !== which ? "miss" : ""].filter(Boolean).join(" ");
       return `<button class="${cls}" data-g="${esc(g.id)}" data-s="${which}"
         aria-pressed="${on}" ${locked ? "disabled" : ""}>
-        <span class="chip">${esc(mono(team))}</span>
+        ${crest(team)}
         <span class="team">${esc(team)}</span>
         <span class="tag">${which}</span>
         <span class="ck"></span></button>`;
@@ -694,6 +732,14 @@ function renderPicks() {
       ? "Saved — you can change these until the lock." : "";
   }
 }
+
+$("#games").addEventListener("error", e => {
+  const img = e.target;
+  if (img.tagName !== "IMG") return;
+  const box = img.parentNode;
+  box.classList.remove("logo");
+  box.textContent = mono(img.closest(".prow")?.querySelector(".team")?.textContent || "");
+}, true);
 
 $("#games").addEventListener("click", e => {
   const b = e.target.closest(".prow"); if (!b || b.disabled) return;
@@ -748,6 +794,30 @@ function seasonRows() {
     const denom = SEASON_PCT_MODE === "all" ? possible : r.played;
     return { ...r, wins: wins[r.playerId] || 0, denom, pct: pct(r.correct, denom) };
   }).sort((a, b) => b.pct - a.pct || b.correct - a.correct || a.name.localeCompare(b.name));
+}
+
+function renderRail() {
+  const el = $("#prail"); if (!el) return;
+  const rows = seasonRows();
+  const mine = S.me ? rows.find(r => r.playerId === S.me.id) : null;
+  const myRank = mine ? rows.indexOf(mine) + 1 : null;
+
+  let out = '<div class="rail-hd">Season standings</div>';
+  if (!rows.length) {
+    out += '<div class="railnote">Standings open once the first week is scored.</div>';
+  } else {
+    out += `<div class="twrap"><table><tbody>${rows.slice(0, 8).map((r, i) => `
+      <tr class="${i === 0 ? "leader" : ""}">
+        <td class="rank">${i + 1}</td>
+        <td>${esc(r.name)}${S.me && r.playerId === S.me.id ? '<span class="you-chip">you</span>' : ""}</td>
+        <td class="num">${fmtPct(r.correct, r.denom)}</td></tr>`).join("")}</tbody></table></div>`;
+    if (mine) {
+      out += `<div class="myline"><span>Your rank</span><b>${myRank} of ${rows.length}</b></div>`;
+      out += `<div class="myline"><span>Correct</span><b>${mine.correct}/${mine.denom}</b></div>`;
+      out += `<div class="myline" style="border-bottom:0"><span>Weeks won</span><b>${mine.wins}</b></div>`;
+    }
+  }
+  el.innerHTML = out;
 }
 
 function renderBoard() {
@@ -907,6 +977,8 @@ function renderAdmin() {
     }).join("")}</tbody></table>`
     : '<div class="empty">No cards submitted for this week yet.</div>';
 
+  renderTeams();
+
   // roster
   $("#adm-roster").innerHTML = S.players.length ? `<table>
     <thead><tr><th>Player</th><th>Device</th><th></th></tr></thead>
@@ -950,6 +1022,15 @@ function admSay(msg, kind = "") { const el = $("#adm-status"); el.className = "s
 async function saveWeek(extra = {}) {
   const p = admWeekPayload();
   await setDoc(doc(db, "weeks", p.id), { ...p, ...extra }, { merge: true });
+  // any team typed for the first time joins the library, ready for a logo
+  const names = [...new Set(p.games.flatMap(g => [g.away, g.home]).filter(Boolean))];
+  const missing = names.filter(n => slug(n) && !S.teams.some(t => t.id === slug(n)));
+  if (missing.length) {
+    const tb = writeBatch(db);
+    missing.forEach(n => tb.set(doc(db, "teams", slug(n)),
+      { id: slug(n), name: n, logo: "", color: "" }, { merge: true }));
+    await tb.commit();
+  }
   if (S.admWeekId !== p.id) { S.admWeekId = p.id; admKey = null; }
   return p;
 }
@@ -1042,6 +1123,56 @@ $("#adm-clear").addEventListener("click", async () => {
   } catch (e) { admSay(friendlyError(e), "err"); }
 });
 
+let teamsKey = null;
+function renderTeams() {
+  const el = $("#adm-teams"); if (!el) return;
+  const key = S.teams.map(t => t.id).join(",");
+  if (key === teamsKey) {                      // refresh previews without stealing focus
+    S.teams.forEach(t => {
+      const cell = el.querySelector(`[data-crest="${t.id}"]`);
+      if (cell) cell.innerHTML = crest(t.name);
+    });
+    return;
+  }
+  teamsKey = key;
+  el.innerHTML = S.teams.length ? `<table>
+    <thead><tr><th></th><th>Team</th><th>Logo image URL</th><th>Colour</th><th></th></tr></thead>
+    <tbody>${S.teams.map(t => `<tr>
+      <td data-crest="${esc(t.id)}">${crest(t.name)}</td>
+      <td>${esc(t.name)}</td>
+      <td style="width:46%"><input data-tid="${esc(t.id)}" data-k="logo" value="${esc(t.logo || "")}"
+        placeholder="https://…/logo.png" autocomplete="off"></td>
+      <td><input data-tid="${esc(t.id)}" data-k="color" type="color"
+        value="${safeColor(t.color) || "#888888"}" style="width:44px;padding:2px;height:30px"></td>
+      <td style="text-align:right"><button class="btn danger sm" data-tdel="${esc(t.id)}">Remove</button></td>
+    </tr>`).join("")}</tbody></table>`
+    : '<div class="empty">No teams yet. They get added automatically when you save a week, or add one above.</div>';
+}
+
+$("#adm-teams").addEventListener("change", async e => {
+  const el = e.target; if (!el.dataset.tid) return;
+  try { await updateDoc(doc(db, "teams", el.dataset.tid), { [el.dataset.k]: el.value.trim() }); }
+  catch (err) { alert(friendlyError(err)); }
+});
+
+$("#adm-teams").addEventListener("click", async e => {
+  const b = e.target.closest("[data-tdel]"); if (!b) return;
+  const t = S.teams.find(x => x.id === b.dataset.tdel); if (!t) return;
+  if (!confirm(`Remove ${t.name} from the team library?\n\nGames already using the name keep working \u2014 they just lose the logo.`)) return;
+  try { await deleteDoc(doc(db, "teams", t.id)); } catch (err) { alert(friendlyError(err)); }
+});
+
+$("#team-add").addEventListener("click", async () => {
+  const name = $("#team-new").value.trim();
+  if (name.length < 2) return;
+  try {
+    await setDoc(doc(db, "teams", slug(name)),
+      { id: slug(name), name, logo: "", color: "" }, { merge: true });
+    $("#team-new").value = "";
+  } catch (err) { alert(friendlyError(err)); }
+});
+$("#team-new").addEventListener("keydown", e => { if (e.key === "Enter") $("#team-add").click(); });
+
 $("#adm-roster").addEventListener("click", async e => {
   const reset = e.target.closest("[data-reset]"), del = e.target.closest("[data-del]");
   try {
@@ -1078,7 +1209,8 @@ function render() {
   $("#app").hidden = false;
 
   const w = activeWeek();
-  $("#league-name").textContent = LEAGUE_NAME;
+  $("#brand-name").textContent = BRAND_NAME;
+  $("#brand-kicker").textContent = BRAND_KICKER;
   $("#week-label").textContent = w
     ? `${w.label || "Week " + w.num}${w.scored ? " · final" : isLocked(w) ? " · locked" : ""}`
     : "No week open";
@@ -1090,13 +1222,13 @@ function render() {
   ["picks", "board", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
 
   renderClock();
-  if (S.view === "picks") renderPicks();
+  if (S.view === "picks") { renderPicks(); renderRail(); }
   if (S.view === "board") renderBoard();
   if (S.view === "mine")  renderMine();
   if (S.view === "admin") renderAdmin();
 }
 
-$("#gate-eyebrow").textContent = "High school football pool";
+$("#gate-eyebrow").textContent = "Kansas high school football";
 </script>
 </body>
 </html>
