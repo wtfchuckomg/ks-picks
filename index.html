@@ -92,11 +92,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 nav.tabs{background:var(--nav);border-bottom:1px solid var(--nav-line);
   position:sticky;top:0;z-index:40;white-space:nowrap;overflow-x:auto}
 .tabs-inner{max-width:1100px;margin:0 auto;padding:0 18px;display:flex}
-.tab{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px 7px;
+.tab{display:inline-block;text-decoration:none;background:none;border:0;
+  border-bottom:3px solid transparent;padding:9px 14px 7px;
   font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;
   text-transform:uppercase;color:var(--nav-muted);border-radius:0;letter-spacing:.01em}
 .tab:hover{color:var(--nav-ink)}
-.tab[aria-selected="true"]{color:var(--nav-ink);border-bottom-color:var(--accent)}
+.tab[aria-current="page"]{color:var(--nav-ink);border-bottom-color:var(--accent)}
 
 main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .view[hidden]{display:none!important}
@@ -133,24 +134,25 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .prow + .prow{border-top:1px solid var(--line-2)}
 .ghd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--line-2)}
-.gmatch{font-size:12.5px;font-weight:600;line-height:1.25}
+.gmatch{font-size:13.5px;font-weight:600;line-height:1.25}
 .gmatch em{font-style:normal;font-weight:400;color:var(--muted)}
 .gstatus{font-size:10px;text-transform:uppercase;font-weight:700;
   letter-spacing:.04em;color:var(--accent);white-space:nowrap}
 .gstatus{color:var(--accent)}
-.prow{width:100%;background:none;border:0;padding:7px 8px;display:flex;align-items:center;gap:10px;
+.prow{width:100%;background:none;border:0;padding:9px 10px;display:flex;align-items:center;gap:11px;
   text-align:left;border-left:3px solid transparent}
 .prow:hover:not(:disabled){background:var(--surface)}
 .prow:disabled{cursor:default}
-.chip{flex:0 0 36px;height:26px;background:var(--surface-2);display:grid;place-items:center;
-  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:13px;color:var(--muted)}
+.chip{flex:0 0 46px;height:36px;background:var(--surface-2);display:grid;place-items:center;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--muted);
+  border-radius:2px}
 .chip.logo{background:none}
-.chip.logo img{width:26px;height:26px;object-fit:contain;display:block}
+.chip.logo img{width:36px;height:36px;object-fit:contain;display:block}
 .prow.on .chip.logo{background:none}
-.team{flex:1 1 auto;font-weight:500;font-size:15px;line-height:1.2}
+.team{flex:1 1 auto;font-weight:500;font-size:16.5px;line-height:1.25}
 .tag{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.03em}
-.ck{flex:0 0 18px;width:18px;height:18px;border:2px solid var(--line);display:grid;place-items:center}
-.ck::after{content:"";width:8px;height:4px;border-left:2.5px solid var(--accent-ink);
+.ck{flex:0 0 22px;width:22px;height:22px;border:2px solid var(--line);display:grid;place-items:center;border-radius:2px}
+.ck::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--accent-ink);
   border-bottom:2.5px solid var(--accent-ink);transform:rotate(-45deg) translate(1px,-1px);opacity:0}
 .prow.on{background:var(--accent-wash);border-left-color:var(--accent)}
 .prow.on .team{font-weight:700}
@@ -245,6 +247,11 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 .res-opt[aria-pressed="true"]{background:var(--win);border-color:var(--win);color:#fff;font-weight:700}
 .res-opt.clear[aria-pressed="true"]{background:var(--muted);border-color:var(--muted)}
 @media (max-width:560px){
+  /* The box stays right-justified in a straight column; dropping the
+     AWAY/HOME tag is what closes the gap, since away is always the top row. */
+  .prow .tag{display:none}
+  .prow{gap:12px;padding:10px 12px}
+  .team{font-size:17px}
   .savebar{row-gap:4px;padding:9px 10px}
   .savebar .status{order:3;flex:1 1 100%}
   .savebar .btn{order:2}
@@ -310,11 +317,11 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
     </div>
   </header>
 
-  <nav class="tabs"><div class="tabs-inner" role="tablist">
-    <button class="tab" role="tab" data-view="picks" aria-selected="true">Make Picks</button>
-    <button class="tab" role="tab" data-view="board" aria-selected="false">Standings</button>
-    <button class="tab" role="tab" data-view="mine" aria-selected="false">My Results</button>
-    <button class="tab" role="tab" data-view="admin" aria-selected="false" id="tab-admin" hidden>Commissioner</button>
+  <nav class="tabs" aria-label="Sections"><div class="tabs-inner">
+    <a class="tab" href="#picks" data-view="picks" aria-current="page">Make Picks</a>
+    <a class="tab" href="#standings" data-view="board">Standings</a>
+    <a class="tab" href="#my-results" data-view="mine">My Results</a>
+    <a class="tab" href="#commissioner" data-view="admin" id="tab-admin" hidden>Commissioner</a>
   </div></nav>
 
   <main>
@@ -408,6 +415,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
             <label class="f">Add a team<input id="team-new" type="text" placeholder="Team name" autocomplete="off"></label>
             <div class="shrink"><button class="btn ghost" id="team-add">Add</button></div>
             <div class="shrink"><button class="btn ghost" id="team-import">Import Kansas schools</button></div>
+            <div class="shrink"><button class="btn danger" id="team-prune">Remove unused</button></div>
           </div>
           <p class="hint" id="team-import-status" style="margin-bottom:10px"></p>
           <div class="twrap" id="adm-teams"></div>
@@ -489,7 +497,8 @@ function team(name) {
 const safeColor = c => /^#[0-9A-Fa-f]{3,8}$/.test(String(c || "")) ? c : null;
 function crest(name) {
   const t = team(name), c = safeColor(t && t.color);
-  if (t && t.logo) return `<span class="chip logo"><img src="${esc(t.logo)}" alt="" loading="lazy"></span>`;
+  if (t && t.logo) return `<span class="chip logo"><img src="${esc(t.logo)}" alt=""
+    loading="lazy" data-mono="${esc(mono(name))}"></span>`;
   return `<span class="chip"${c ? ` style="background:${c};color:#fff"` : ""}>${esc(mono(name))}</span>`;
 }
 const mono = s => { const w = String(s).replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
@@ -850,12 +859,14 @@ function renderPicks() {
   }
 }
 
-$("#games").addEventListener("error", e => {
+// A logo that fails to load falls back to initials wherever it appears —
+// the scoreboard, the commissioner's team table, anywhere.
+document.addEventListener("error", e => {
   const img = e.target;
-  if (img.tagName !== "IMG") return;
+  if (!img || img.tagName !== "IMG" || !img.closest(".chip.logo")) return;
   const box = img.parentNode;
   box.classList.remove("logo");
-  box.textContent = mono(img.closest(".prow")?.querySelector(".team")?.textContent || "");
+  box.textContent = img.dataset.mono || "";
 }, true);
 
 $("#games").addEventListener("click", e => {
@@ -1272,7 +1283,7 @@ function renderTeams() {
       <td data-crest="${esc(t.id)}">${crest(t.name)}</td>
       <td>${esc(t.name)}</td>
       <td style="width:22%"><input data-tid="${esc(t.id)}" data-k="aliases" value="${esc((t.aliases || []).join(", "))}"
-        placeholder="SM North, SMN" autocomplete="off"></td>
+        placeholder="short name" autocomplete="off"></td>
       <td style="width:32%"><input data-tid="${esc(t.id)}" data-k="logo" value="${esc(t.logo || "")}"
         placeholder="https://…/logo.png" autocomplete="off"></td>
       <td><input data-tid="${esc(t.id)}" data-k="color" type="color"
@@ -1368,6 +1379,43 @@ $("#team-import").addEventListener("click", async () => {
   } catch (e) { st.textContent = friendlyError(e); }
 });
 
+// Which teams are actually named in a slate, by full name or short name.
+function usedTeamIds() {
+  const ids = new Set();
+  S.weeks.forEach(w => (w.games || []).forEach(g => {
+    [g.away, g.home].forEach(n => {
+      if (!n || !n.trim()) return;
+      const t = team(n);
+      if (t) ids.add(t.id);
+    });
+  }));
+  return ids;
+}
+
+$("#team-prune").addEventListener("click", async () => {
+  const st = $("#team-import-status");
+  const used = usedTeamIds();
+  const spare = S.teams.filter(t => !used.has(t.id));
+  if (!spare.length) {
+    st.textContent = `Nothing to remove — all ${S.teams.length} teams are used in a week.`; return;
+  }
+  if (!confirm(
+    `Remove ${spare.length} team${spare.length === 1 ? "" : "s"} that no week uses?\n\n` +
+    `${used.size} used in a slate will be kept, with their logos.\n` +
+    `Nothing about your weeks, picks or standings changes, and you can import the full list again whenever you like.`)) return;
+  st.textContent = `Removing ${spare.length}\u2026`;
+  try {
+    for (let i = 0; i < spare.length; i += 400) {
+      const chunk = spare.slice(i, i + 400);
+      const b = writeBatch(db);
+      chunk.forEach(t => b.delete(doc(db, "teams", t.id)));
+      await b.commit();
+      st.textContent = `Removed ${Math.min(i + chunk.length, spare.length)} of ${spare.length}\u2026`;
+    }
+    st.textContent = `Done — ${used.size} team${used.size === 1 ? "" : "s"} left, the ones your weeks actually use.`;
+  } catch (e) { st.textContent = friendlyError(e); }
+});
+
 $("#adm-roster").addEventListener("change", async e => {
   const el = e.target; if (el.dataset.pk !== "email") return;
   const mail = el.value.trim().toLowerCase();
@@ -1417,10 +1465,18 @@ $("#gate-close").addEventListener("click", closeGate);
 $("#gate").addEventListener("click", e => { if (e.target === $("#gate")) closeGate(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && S.showGate) closeGate(); });
 
-$$(".tab").forEach(t => t.addEventListener("click", () => {
-  S.view = t.dataset.view;
+// Views are addressable, so the tabs can be ordinary links: right-click,
+// middle-click and cmd-click all behave, and back/forward work.
+const VIEW_BY_HASH = { "#picks": "picks", "#standings": "board",
+                       "#my-results": "mine", "#commissioner": "admin" };
+const HASH_BY_VIEW = Object.fromEntries(
+  Object.entries(VIEW_BY_HASH).map(([h, v]) => [v, h]));
+
+function applyHash() {
+  S.view = VIEW_BY_HASH[location.hash] || "picks";
   render();
-}));
+}
+window.addEventListener("hashchange", applyHash);
 
 function render() {
   if (!S.ready) return;
@@ -1442,7 +1498,12 @@ function render() {
   if (!S.isAdmin && S.view === "admin") S.view = "picks";
   if (!S.me && S.view === "mine") S.view = "picks";
 
-  $$(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === S.view)));
+  $$(".tab").forEach(t => {
+    if (t.dataset.view === S.view) t.setAttribute("aria-current", "page");
+    else t.removeAttribute("aria-current");
+  });
+  const want = HASH_BY_VIEW[S.view];
+  if (want && location.hash !== want) history.replaceState(null, "", want);
   ["picks", "board", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
 
   renderClock();
@@ -1452,6 +1513,8 @@ function render() {
   if (S.view === "admin") renderAdmin();
 }
 
+
+applyHash();
 </script>
 </body>
 </html>
