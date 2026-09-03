@@ -391,7 +391,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
-        <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that.</span></div>
+        <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that. Use <b>Also known as</b> for the short names you actually type, like SM North.</span></div>
         <div class="card-bd">
           <div class="row" style="margin-bottom:12px">
             <label class="f">Add a team<input id="team-new" type="text" placeholder="Team name" autocomplete="off"></label>
@@ -469,7 +469,12 @@ const weekId = n => "w" + pad2(n);
 const slug   = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
                      .replace(/^-|-$/g, "").slice(0, 40);
 const pct = (c, t) => t > 0 ? (c / t * 100) : 0;
-const team = name => S.teams.find(t => t.id === slug(name)) || null;
+function team(name) {
+  const s = slug(name);
+  return S.teams.find(t => t.id === s)
+      || S.teams.find(t => (t.aliases || []).some(a => slug(a) === s))
+      || null;
+}
 const safeColor = c => /^#[0-9A-Fa-f]{3,8}$/.test(String(c || "")) ? c : null;
 function crest(name) {
   const t = team(name), c = safeColor(t && t.color);
@@ -1117,7 +1122,7 @@ async function saveWeek(extra = {}) {
   await setDoc(doc(db, "weeks", p.id), { ...p, ...extra }, { merge: true });
   // any team typed for the first time joins the library, ready for a logo
   const names = [...new Set(p.games.flatMap(g => [g.away, g.home]).filter(Boolean))];
-  const missing = names.filter(n => slug(n) && !S.teams.some(t => t.id === slug(n)));
+  const missing = names.filter(n => slug(n) && !team(n));
   if (missing.length) {
     const tb = writeBatch(db);
     missing.forEach(n => tb.set(doc(db, "teams", slug(n)),
@@ -1219,7 +1224,7 @@ $("#adm-clear").addEventListener("click", async () => {
 let teamsKey = null;
 function renderTeams() {
   const el = $("#adm-teams"); if (!el) return;
-  const key = S.teams.map(t => t.id).join(",");
+  const key = S.teams.map(t => t.id + ":" + (t.aliases || []).length).join(",");
   if (key === teamsKey) {                      // refresh previews without stealing focus
     S.teams.forEach(t => {
       const cell = el.querySelector(`[data-crest="${t.id}"]`);
@@ -1229,11 +1234,13 @@ function renderTeams() {
   }
   teamsKey = key;
   el.innerHTML = S.teams.length ? `<table>
-    <thead><tr><th></th><th>Team</th><th>Logo image URL</th><th>Colour</th><th></th></tr></thead>
+    <thead><tr><th></th><th>Team</th><th>Also known as</th><th>Logo image URL</th><th>Colour</th><th></th></tr></thead>
     <tbody>${S.teams.map(t => `<tr>
       <td data-crest="${esc(t.id)}">${crest(t.name)}</td>
       <td>${esc(t.name)}</td>
-      <td style="width:46%"><input data-tid="${esc(t.id)}" data-k="logo" value="${esc(t.logo || "")}"
+      <td style="width:22%"><input data-tid="${esc(t.id)}" data-k="aliases" value="${esc((t.aliases || []).join(", "))}"
+        placeholder="SM North, SMN" autocomplete="off"></td>
+      <td style="width:32%"><input data-tid="${esc(t.id)}" data-k="logo" value="${esc(t.logo || "")}"
         placeholder="https://…/logo.png" autocomplete="off"></td>
       <td><input data-tid="${esc(t.id)}" data-k="color" type="color"
         value="${safeColor(t.color) || "#888888"}" style="width:44px;padding:2px;height:30px"></td>
@@ -1244,7 +1251,18 @@ function renderTeams() {
 
 $("#adm-teams").addEventListener("change", async e => {
   const el = e.target; if (!el.dataset.tid) return;
-  try { await updateDoc(doc(db, "teams", el.dataset.tid), { [el.dataset.k]: el.value.trim() }); }
+  let value = el.value.trim();
+  if (el.dataset.k === "aliases") {
+    value = [...new Set(value.split(",").map(v => v.trim()).filter(Boolean))];
+    const clash = value.map(v => slug(v)).find(v =>
+      S.teams.some(t => t.id !== el.dataset.tid &&
+        (t.id === v || (t.aliases || []).some(a => slug(a) === v))));
+    if (clash) {
+      alert(`"${clash}" already belongs to another team. Pick a different short name.`);
+      renderTeams(); return;
+    }
+  }
+  try { await updateDoc(doc(db, "teams", el.dataset.tid), { [el.dataset.k]: value }); }
   catch (err) { alert(friendlyError(err)); }
 });
 
@@ -1279,22 +1297,34 @@ $("#team-import").addEventListener("click", async () => {
     return;
   }
   const fresh = list.filter(t => !S.teams.some(x => x.id === t.slug));
-  if (!fresh.length) { st.textContent = `All ${list.length} schools are already in the library.`; return; }
-  if (!confirm(`Add ${fresh.length} Kansas school${fresh.length === 1 ? "" : "s"} to the team library?\n\n` +
-      `${fresh.filter(t => t.file).length} come with a logo. Teams you already have are left alone.`)) return;
+  // a school already in the library but still without a logo picks one up when
+  // the manifest gains it, so logos uploaded later aren't stranded
+  const upgrade = list.filter(t => t.file &&
+    S.teams.some(x => x.id === t.slug && !x.logo));
+  if (!fresh.length && !upgrade.length) {
+    st.textContent = `Nothing to add — all ${list.length} schools are already in the library with their logos.`; return;
+  }
+  const parts = [];
+  if (fresh.length) parts.push(`add ${fresh.length} school${fresh.length === 1 ? "" : "s"}`);
+  if (upgrade.length) parts.push(`add logos to ${upgrade.length} you already have`);
+  if (!confirm(`This will ${parts.join(" and ")}.\n\n` +
+      `${fresh.filter(t => t.file).length + upgrade.length} will end up with a logo. Nothing else is changed.`)) return;
 
-  st.textContent = `Adding ${fresh.length}\u2026`;
+  const work = [...fresh, ...upgrade];
+  st.textContent = `Saving ${work.length}\u2026`;
   try {
-    for (let i = 0; i < fresh.length; i += 400) {   // Firestore caps a batch at 500
-      const chunk = fresh.slice(i, i + 400);
+    for (let i = 0; i < work.length; i += 400) {   // Firestore caps a batch at 500
+      const chunk = work.slice(i, i + 400);
       const b = writeBatch(db);
       chunk.forEach(t => b.set(doc(db, "teams", t.slug), {
-        id: t.slug, name: t.name, logo: t.file ? "logos/" + t.file : "", color: ""
+        id: t.slug, name: t.name, logo: t.file ? "logos/" + t.file : "",
+        color: "", aliases: t.aliases || []
       }, { merge: true }));
       await b.commit();
-      st.textContent = `Added ${Math.min(i + chunk.length, fresh.length)} of ${fresh.length}\u2026`;
+      st.textContent = `Saved ${Math.min(i + chunk.length, work.length)} of ${work.length}\u2026`;
     }
-    st.textContent = `Added ${fresh.length} schools. Type a team name into a slate and its logo appears automatically.`;
+    st.textContent = `Done — ${fresh.length} added, ${upgrade.length} given a logo. ` +
+      `Type a team name into a slate and its logo appears automatically.`;
   } catch (e) { st.textContent = friendlyError(e); }
 });
 
