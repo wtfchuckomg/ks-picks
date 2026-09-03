@@ -233,6 +233,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
         <div class="eyebrow" id="gate-eyebrow">Kansas</div>
         <h1 id="gate-title">Kansas Media High School Pick &rsquo;ems</h1>
       </div>
+      <div id="gate-note"></div>
       <p class="hint">Tap your name to start picking. No password, no account &mdash; just claim your name once on this device.</p>
       <div>
         <div class="eyebrow" style="margin-bottom:7px">On the roster</div>
@@ -369,7 +370,9 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
           <div class="row" style="margin-bottom:12px">
             <label class="f">Add a team<input id="team-new" type="text" placeholder="Team name" autocomplete="off"></label>
             <div class="shrink"><button class="btn ghost" id="team-add">Add</button></div>
+            <div class="shrink"><button class="btn ghost" id="team-import">Import Kansas schools</button></div>
           </div>
+          <p class="hint" id="team-import-status" style="margin-bottom:10px"></p>
           <div class="twrap" id="adm-teams"></div>
         </div>
       </div>
@@ -416,7 +419,9 @@ const SEASON_PCT_MODE = "all";
    ========================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously, signOut,
-         GoogleAuthProvider, signInWithPopup }
+         GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+         setPersistence, indexedDBLocalPersistence, browserLocalPersistence,
+         browserSessionPersistence, inMemoryPersistence }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, updateDoc, deleteDoc, collection,
          getDocs, query, where, onSnapshot, writeBatch, Timestamp, serverTimestamp }
@@ -470,10 +475,21 @@ function friendlyError(e) {
   const code = e?.code || "";
   if (code.includes("permission-denied"))
     return "The server turned that down — picks are locked, or you're not the commissioner.";
+  if (code.includes("disallowed-useragent") || code.includes("operation-not-supported"))
+    return "This browser can't complete Google sign-in. Open the page in Safari or Chrome.";
+  if (code.includes("web-storage-unsupported"))
+    return "This browser is blocking site storage, which sign-in needs. Open the page in Safari or Chrome.";
   if (code.includes("unavailable") || code.includes("network"))
     return "Can't reach the server. Check your connection and try again.";
   return e?.message || "Something went wrong.";
 }
+
+// Facebook, Instagram, Twitter/X, LinkedIn, Snapchat and Android webviews all
+// embed a stripped-down browser. Storage is often restricted, and Google flatly
+// refuses OAuth inside one, so we tell people to open the page properly.
+const IN_APP_BROWSER = /FBAN|FBAV|FB_IAB|Instagram|Twitter|LinkedInApp|Snapchat|Line\/|MicroMessenger|GSA\//i
+    .test(navigator.userAgent) || /Android.*;\s*wv\)/i.test(navigator.userAgent);
+const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 /* ==========================================================
    4. State
@@ -496,10 +512,38 @@ const S = {
    ========================================================== */
 let unsubs = [];
 
+// Embedded browsers may block IndexedDB (and sometimes localStorage). Walk down
+// to whatever this one allows rather than failing to sign in at all.
+async function ensurePersistence() {
+  for (const p of [indexedDBLocalPersistence, browserLocalPersistence,
+                   browserSessionPersistence, inMemoryPersistence]) {
+    try { await setPersistence(auth, p); return; } catch (e) { /* try the next */ }
+  }
+}
+
+// A blank screen is never acceptable: if nothing has loaded, say why.
+let booted = false;
+setTimeout(() => {
+  if (booted) return;
+  S.ready = true;
+  S.bootNote = IN_APP_BROWSER
+    ? "This page is open inside another app\u2019s browser, which blocks the sign-in it needs. Open it in Safari or Chrome instead."
+    : "Still trying to reach the server. Check your connection, then reload.";
+  render();
+}, 9000);
+
+getRedirectResult(auth).catch(() => {});
+
 onAuthStateChanged(auth, async user => {
   if (!user) {
-    try { await signInAnonymously(auth); }
-    catch (e) { $("#gate-err").textContent = friendlyError(e); document.getElementById("gate").hidden = false; }
+    try { await ensurePersistence(); await signInAnonymously(auth); }
+    catch (e) {
+      booted = true; S.ready = true;
+      S.bootNote = IN_APP_BROWSER
+        ? "This page is open inside another app\u2019s browser, which blocks the sign-in it needs. Open it in Safari or Chrome instead."
+        : friendlyError(e);
+      render();
+    }
     return;
   }
   S.uid = user.uid;
@@ -516,7 +560,7 @@ function subscribe() {
     S.players = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                   .sort((a, b) => a.name.localeCompare(b.name));
     S.me = S.players.find(p => p.uid === S.uid) || null;
-    S.ready = true;
+    booted = true; S.ready = true; S.bootNote = null;
     render();
   }, err => showFatal(err)));
 
@@ -563,6 +607,18 @@ function showFatal(err) {
    ========================================================== */
 function renderGate() {
   $("#gate-title").textContent = LEAGUE_NAME;
+
+  const note = $("#gate-note");
+  if (IN_APP_BROWSER) {
+    note.innerHTML = `<div class="banner"><b>Open this in your real browser.</b><br>
+      You&rsquo;re viewing it inside another app, which blocks the sign-in this page needs.
+      Tap the <b>${IS_IOS ? "&#8230; menu, then <b>Open in Safari</b>" : "&#8942; menu, then <b>Open in Chrome</b>"}</b>
+      &mdash; or copy the link and paste it into your browser.</div>`;
+  } else if (S.bootNote) {
+    note.innerHTML = `<div class="banner">${esc(S.bootNote)}</div>`;
+  } else {
+    note.innerHTML = "";
+  }
   const list = $("#roster-list");
   if (!S.players.length) {
     list.innerHTML = '<span class="hint">Nobody yet — be the first.</span>';
@@ -574,8 +630,9 @@ function renderGate() {
   }
   $("#admin-signin").textContent = S.isAdmin
     ? `Commissioner: ${esc(S.email)} — now pick your name`
+    : IN_APP_BROWSER ? "Commissioner sign-in needs Safari or Chrome"
     : "Sign in as commissioner";
-  $("#admin-signin").disabled = S.isAdmin;
+  $("#admin-signin").disabled = S.isAdmin || IN_APP_BROWSER;
 }
 
 $("#roster-list").addEventListener("click", async e => {
@@ -614,8 +671,18 @@ $("#join-btn").addEventListener("click", async () => {
 $("#new-name").addEventListener("keydown", e => { if (e.key === "Enter") $("#join-btn").click(); });
 
 $("#admin-signin").addEventListener("click", async () => {
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (err) { $("#gate-err").textContent = friendlyError(err); }
+  const provider = new GoogleAuthProvider();
+  try {
+    await ensurePersistence();
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    const code = err?.code || "";
+    // Mobile browsers routinely block the popup; a redirect works where it doesn't.
+    if (/popup-blocked|popup-closed-by-user|operation-not-supported/.test(code)) {
+      try { await signInWithRedirect(auth, provider); return; } catch (e2) { err = e2; }
+    }
+    $("#gate-err").textContent = friendlyError(err);
+  }
 });
 
 $("#switch-user").addEventListener("click", async () => {
@@ -1172,6 +1239,38 @@ $("#team-add").addEventListener("click", async () => {
   } catch (err) { alert(friendlyError(err)); }
 });
 $("#team-new").addEventListener("keydown", e => { if (e.key === "Enter") $("#team-add").click(); });
+
+$("#team-import").addEventListener("click", async () => {
+  const st = $("#team-import-status");
+  st.textContent = "Reading logos/teams.json\u2026";
+  let list;
+  try {
+    const res = await fetch("logos/teams.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    list = await res.json();
+  } catch (e) {
+    st.textContent = "Couldn't read logos/teams.json — make sure the logos folder is uploaded alongside index.html.";
+    return;
+  }
+  const fresh = list.filter(t => !S.teams.some(x => x.id === t.slug));
+  if (!fresh.length) { st.textContent = `All ${list.length} schools are already in the library.`; return; }
+  if (!confirm(`Add ${fresh.length} Kansas school${fresh.length === 1 ? "" : "s"} to the team library?\n\n` +
+      `${fresh.filter(t => t.file).length} come with a logo. Teams you already have are left alone.`)) return;
+
+  st.textContent = `Adding ${fresh.length}\u2026`;
+  try {
+    for (let i = 0; i < fresh.length; i += 400) {   // Firestore caps a batch at 500
+      const chunk = fresh.slice(i, i + 400);
+      const b = writeBatch(db);
+      chunk.forEach(t => b.set(doc(db, "teams", t.slug), {
+        id: t.slug, name: t.name, logo: t.file ? "logos/" + t.file : "", color: ""
+      }, { merge: true }));
+      await b.commit();
+      st.textContent = `Added ${Math.min(i + chunk.length, fresh.length)} of ${fresh.length}\u2026`;
+    }
+    st.textContent = `Added ${fresh.length} schools. Type a team name into a slate and its logo appears automatically.`;
+  } catch (e) { st.textContent = friendlyError(e); }
+});
 
 $("#adm-roster").addEventListener("click", async e => {
   const reset = e.target.closest("[data-reset]"), del = e.target.closest("[data-del]");
