@@ -104,6 +104,71 @@ box, so this works before you deploy anything.
 5. After the games, **Enter results** → tap each winner → **Post scores**.
    Standings update instantly for everybody.
 
+## The site switcher
+
+The dark strip at the very top links between your two sites: **Media Rankings**
+goes to kansasmediarankings.com, **Pick 'Ems** is this one and shows as active.
+To change either, edit the two `.sitelink` anchors near the top of the `<body>`
+in `index.html`.
+
+Because that bar can navigate away mid-card, the browser now warns before
+leaving if someone has tapped picks they never submitted.
+
+## Appearance
+
+The site is white, always. It does not follow the visitor's dark-mode setting —
+someone with their phone in dark mode still sees the light design, so what you
+see is what everyone sees. The nav strip and the submit bar are dark on purpose;
+that is the design, not a theme.
+
+## Branding and link previews
+
+`brand/` holds the artwork and the generated sizes:
+
+| File | Used for |
+|---|---|
+| `header.png` | the original lockup, kept as the master |
+| `header-web.png` | the masthead on the site |
+| `helmet.png` | the original helmet, kept as the master |
+| `icon-32/192.png` | browser tab icon |
+| `icon-180.png` | iPhone home-screen icon |
+| `og.jpg` | the image shown when the link is posted |
+
+Upload the whole `brand/` folder with `index.html`.
+
+The link-preview tags point at `https://picks.kansasmediarankings.com/brand/og.jpg`
+as an absolute address, because Twitter and Facebook cannot resolve a relative
+one. If the site ever moves, edit the `og:` and `twitter:` tags at the top of
+`index.html`.
+
+**Previews are cached hard.** Once a platform has scraped your link it keeps
+that copy for a long time. To force a refresh after changing the artwork, run
+the URL through Twitter's Card Validator or Facebook's Sharing Debugger.
+
+## Team logos
+
+`logos/` holds 167 Kansas school logos plus `teams.json`, the manifest the app
+reads. Upload the whole folder to the repo alongside `index.html`.
+
+Then, once only: **Commissioner → Teams → Import Kansas schools.** That loads
+215 schools into the library. After that, typing a school into a slate shows
+its logo automatically — there is nothing to do per week.
+
+Crests fall back in three steps, so the board never looks broken:
+
+1. the school's logo, if one is set
+2. the school's colour behind its initials, if you set a colour
+3. plain initials
+
+Coverage is 215 of roughly 340 Kansas football programs. The gap is mostly
+small and 8-man schools that FieldLevel doesn't carry, and 48 schools in the
+library whose logo came back as a generic placeholder and was dropped. A school
+that is missing still works — it is added automatically when you save the week
+and shows initials until a logo exists.
+
+To add one by hand: Commissioner → Teams → paste an image URL, or drop a file
+into `logos/` and enter `logos/yourfile.png`.
+
 ## If you mess up
 
 Almost nothing is permanent. Working from least to most drastic:

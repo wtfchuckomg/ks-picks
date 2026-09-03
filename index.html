@@ -50,6 +50,16 @@ button{font:inherit;color:inherit;cursor:pointer}
 .num,.mono{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* ---------- site switcher ---------- */
+.sitebar{background:var(--nav);border-bottom:1px solid var(--nav-line)}
+.sitebar-inner{max-width:1100px;margin:0 auto;padding:0 18px;display:flex;gap:26px}
+.sitelink{
+  display:inline-block;padding:9px 0 7px;border-bottom:3px solid transparent;
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;
+  text-transform:uppercase;letter-spacing:.02em;color:var(--nav-muted);text-decoration:none}
+.sitelink:hover{color:var(--nav-ink)}
+.sitelink.active{color:var(--nav-ink);border-bottom-color:var(--accent)}
+
 /* ---------- masthead ---------- */
 .board{background:var(--brand-bar);color:var(--brand-ink);border-bottom:1px solid var(--brand-line)}
 .board-inner{max-width:1100px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -224,6 +234,8 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   .savebar{row-gap:4px;padding:9px 10px}
   .savebar .status{order:3;flex:1 1 100%}
   .savebar .btn{order:2}
+  .sitebar-inner{gap:18px;padding:0 14px}
+  .sitelink{font-size:14px}
   #brand-logo{height:30px}
   .clock-val{font-size:17px}
   .board-inner{gap:10px;padding:8px 14px}
@@ -262,6 +274,12 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 
 <!-- ============ APP ============ -->
 <div id="app" hidden>
+  <div class="sitebar">
+    <nav class="sitebar-inner" aria-label="Kansas Media sites">
+      <a class="sitelink" href="https://www.kansasmediarankings.com/">Media Rankings</a>
+      <a class="sitelink active" href="./" aria-current="page">Pick &rsquo;Ems</a>
+    </nav>
+  </div>
   <header class="board">
     <div class="board-inner">
       <div class="brand">
@@ -1293,6 +1311,19 @@ $("#adm-roster").addEventListener("click", async e => {
         await deleteDoc(doc(db, "players", p.id));
     }
   } catch (err) { alert(friendlyError(err)); }
+});
+
+// The site switcher can navigate away mid-card. Picks only exist in the
+// browser until Submit, so say so rather than losing them silently.
+window.addEventListener("beforeunload", e => {
+  const w = activeWeek();
+  if (!w || !S.me || isLocked(w)) return;
+  const draft = S.draft[w.id] || {};
+  const saved = S.myPicks[w.id]?.picks || {};
+  const keys = new Set([...Object.keys(draft), ...Object.keys(saved)]);
+  for (const k of keys) {
+    if (draft[k] !== saved[k]) { e.preventDefault(); e.returnValue = ""; return; }
+  }
 });
 
 /* ==========================================================
