@@ -3,7 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="description" content="Pick 15 Kansas high school football games each week. Weekly winners and season-long standings.">
+
+<link rel="icon" type="image/png" sizes="32x32" href="brand/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="brand/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="brand/icon-180.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kansas Media HS Pick &rsquo;ems">
+<meta property="og:title" content="Kansas Media HS Pick &rsquo;ems">
+<meta property="og:description" content="Pick 15 Kansas high school football games each week. Weekly winners and season-long standings.">
+<meta property="og:url" content="https://picks.kansasmediarankings.com/">
+<meta property="og:image" content="https://picks.kansasmediarankings.com/brand/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kansas Media HS Pick &rsquo;ems">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kansas Media HS Pick &rsquo;ems">
+<meta name="twitter:description" content="Pick 15 Kansas high school football games each week. Weekly winners and season-long standings.">
+<meta name="twitter:image" content="https://picks.kansasmediarankings.com/brand/og.jpg">
 <title>Kansas Media Pick ’ems</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,23 +36,8 @@
   --nav:#111417; --nav-ink:#FFFFFF; --nav-muted:#9AA2AB; --nav-line:#2A2F35;
   --accent:#D50A0A; --accent-ink:#FFFFFF; --accent-wash:#FBEDED;
   --win:#0F7A34; --loss:#C0271F;
-  color-scheme:light dark;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --ground:#0A0C0E; --surface:#14171A; --surface-2:#1C2024;
-    --ink:#EDEFF2; --muted:#8B939C; --line:#262B31; --line-2:#1C2024;
-    --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#8B939C; --nav-line:#262B31;
-    --accent:#E8262C; --accent-ink:#FFFFFF; --accent-wash:#26100F;
-    --win:#3FBE68; --loss:#EE6257;
-  }
-}
-:root[data-theme="dark"]{
-  --ground:#0A0C0E; --surface:#14171A; --surface-2:#1C2024;
-  --ink:#EDEFF2; --muted:#8B939C; --line:#262B31; --line-2:#1C2024;
-  --nav:#000000; --nav-ink:#FFFFFF; --nav-muted:#8B939C; --nav-line:#262B31;
-  --accent:#E8262C; --accent-ink:#FFFFFF; --accent-wash:#26100F;
-  --win:#3FBE68; --loss:#EE6257;
+  --brand-bar:#FFFFFF; --brand-ink:#0E1013; --brand-muted:#5A626B; --brand-line:#DFE3E7;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -45,32 +51,35 @@ button{font:inherit;color:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ---------- masthead ---------- */
-.board{position:sticky;top:0;z-index:40;background:var(--nav);color:var(--nav-ink)}
-.board-inner{max-width:1100px;margin:0 auto;padding:9px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:9px}
+.board{background:var(--brand-bar);color:var(--brand-ink);border-bottom:1px solid var(--brand-line)}
+.board-inner{max-width:1100px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;flex:0 1 auto;min-width:0}
+#brand-logo{height:44px;width:auto;max-width:100%;display:block}
+.gate-logo{width:100%;height:auto;display:block;margin-bottom:2px}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .brand-name{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;
   text-transform:uppercase;line-height:1;letter-spacing:-.005em}
 .brand-sub{font-size:11px;text-transform:uppercase;color:var(--nav-muted);font-weight:600;
   border-left:1px solid var(--nav-line);padding-left:9px;letter-spacing:.02em}
 .weekchip{margin-right:auto;font-family:"Barlow Condensed",sans-serif;font-weight:600;
-  font-size:13px;text-transform:uppercase;color:var(--nav-ink);
-  border:1px solid var(--nav-line);padding:2px 8px;letter-spacing:.02em}
+  font-size:13px;text-transform:uppercase;color:var(--brand-ink);
+  border:1px solid var(--brand-line);padding:2px 8px;letter-spacing:.02em}
 .clock{display:flex;align-items:baseline;gap:7px}
-.clock-label{font-size:10px;text-transform:uppercase;color:var(--nav-muted);font-weight:600;letter-spacing:.03em}
+.clock-label{font-size:10px;text-transform:uppercase;color:var(--brand-muted);font-weight:600;letter-spacing:.03em}
 .clock-val{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;
   font-variant-numeric:tabular-nums;line-height:1}
-.clock.locked .clock-val{color:#FF5A52}
-.clock.soon .clock-val{color:#FFC53D}
+.clock.locked .clock-val{color:var(--accent)}
+.clock.soon .clock-val{color:#B26A00}
 .whoami{display:flex;align-items:center;gap:8px;font-size:13px;
-  border-left:1px solid var(--nav-line);padding-left:14px}
+  border-left:1px solid var(--brand-line);padding-left:14px}
 .whoami b{font-weight:600}
-.linkish{background:none;border:0;padding:0;color:var(--nav-muted);font-size:11px;
+.linkish{background:none;border:0;padding:0;color:var(--brand-muted);font-size:11px;
   text-decoration:underline;text-underline-offset:2px}
-.linkish:hover{color:var(--nav-ink)}
+.linkish:hover{color:var(--brand-ink)}
 
 /* ---------- nav strip ---------- */
 nav.tabs{background:var(--nav);border-bottom:1px solid var(--nav-line);
-  position:sticky;top:0;z-index:30;white-space:nowrap;overflow-x:auto}
+  position:sticky;top:0;z-index:40;white-space:nowrap;overflow-x:auto}
 .tabs-inner{max-width:1100px;margin:0 auto;padding:0 18px;display:flex}
 .tab{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px 7px;
   font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;
@@ -215,8 +224,10 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   .savebar{row-gap:4px;padding:9px 10px}
   .savebar .status{order:3;flex:1 1 100%}
   .savebar .btn{order:2}
-  .brand-name{font-size:20px}
-  .clock-val{font-size:18px}
+  #brand-logo{height:30px}
+  .clock-val{font-size:17px}
+  .board-inner{gap:10px;padding:8px 14px}
+  .whoami{border-left:0;padding-left:0}
   .grid-2{grid-template-columns:1fr}
   .adm-game{grid-template-columns:18px 1fr;gap:4px}
   .adm-game .at2{display:none}
@@ -229,10 +240,8 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 <div id="gate" class="gate" hidden>
   <div class="card">
     <div class="card-bd">
-      <div>
-        <div class="eyebrow" id="gate-eyebrow">Kansas</div>
-        <h1 id="gate-title">Kansas Media High School Pick &rsquo;ems</h1>
-      </div>
+      <img src="brand/header-web.png" alt="Kansas Media HS Pick &rsquo;ems" class="gate-logo">
+      <h1 id="gate-title" class="visually-hidden">Kansas Media High School Pick &rsquo;ems</h1>
       <div id="gate-note"></div>
       <p class="hint">Tap your name to start picking. No password, no account &mdash; just claim your name once on this device.</p>
       <div>
@@ -256,8 +265,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   <header class="board">
     <div class="board-inner">
       <div class="brand">
-        <span class="brand-name" id="brand-name">Kansas Media</span>
-        <span class="brand-sub" id="brand-kicker">High School Pick &rsquo;ems</span>
+        <img src="brand/header-web.png" alt="Kansas Media HS Pick &rsquo;ems" id="brand-logo">
       </div>
       <span class="weekchip" id="week-label">No week open</span>
       <div class="clock" id="clock">
@@ -1308,8 +1316,7 @@ function render() {
   $("#app").hidden = false;
 
   const w = activeWeek();
-  $("#brand-name").textContent = BRAND_NAME;
-  $("#brand-kicker").textContent = BRAND_KICKER;
+  $("#brand-logo").alt = LEAGUE_NAME;
   $("#week-label").textContent = w
     ? `${w.label || "Week " + w.num}${w.scored ? " · final" : isLocked(w) ? " · locked" : ""}`
     : "No week open";
@@ -1327,7 +1334,6 @@ function render() {
   if (S.view === "admin") renderAdmin();
 }
 
-$("#gate-eyebrow").textContent = "Kansas high school football";
 </script>
 </body>
 </html>
