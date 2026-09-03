@@ -82,6 +82,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .clock.soon .clock-val{color:#B26A00}
 .whoami{display:flex;align-items:center;gap:8px;font-size:13px;
   border-left:1px solid var(--brand-line);padding-left:14px}
+.whoami[hidden],.tab[hidden],.btn[hidden]{display:none}
 .whoami b{font-weight:600}
 .linkish{background:none;border:0;padding:0;color:var(--brand-muted);font-size:11px;
   text-decoration:underline;text-underline-offset:2px}
@@ -124,9 +125,9 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 
 /* ---------- scoreboard list ---------- */
 .games{border-top:1px solid var(--line)}
-.game{border-bottom:1px solid var(--line)}
-.ghd{display:flex;align-items:center;justify-content:space-between;padding:5px 2px 3px;
-  font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.game{border-bottom:1px solid var(--line);padding:5px 0}
+.ghd{display:flex;justify-content:flex-end;padding:2px 8px 0;
+  font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.04em}
 .gstatus{color:var(--accent)}
 .prow{width:100%;background:none;border:0;padding:7px 8px;display:flex;align-items:center;gap:10px;
   text-align:left;border-left:3px solid transparent}
@@ -207,13 +208,17 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 .pill.final{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 
 /* ---------- gate ---------- */
-.gate{max-width:400px;margin:9vh auto;padding:0 18px}
-.gate .card-bd{display:flex;flex-direction:column;gap:12px}
+.gate{position:fixed;inset:0;z-index:60;background:rgba(10,12,14,.6);
+  display:flex;flex-direction:column;align-items:center;padding:5vh 18px 30px;overflow-y:auto}
+.gate[hidden]{display:none}
+.gate-card{width:100%;max-width:400px;background:var(--ground);
+  border:1px solid var(--line);border-radius:3px;padding:16px}
+.gate-close{background:none;border:0;color:#fff;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;margin-top:14px;padding:6px 10px;
+  text-decoration:underline;text-underline-offset:3px}
+.gate-close:hover{color:var(--accent)}
+.gate .card,.gate .card-bd{display:flex;flex-direction:column;gap:12px;border:0;padding:0;margin:0}
 .gate h1{font-size:30px;text-transform:uppercase;font-weight:700;line-height:1;letter-spacing:-.01em}
-.roster-list{display:flex;flex-wrap:wrap;gap:5px}
-.roster-btn{background:var(--surface);border:1px solid var(--line);border-radius:2px;
-  padding:6px 12px;font-size:14px;font-weight:600}
-.roster-btn:hover{border-color:var(--accent);color:var(--accent)}
 .sep{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:10px;
   text-transform:uppercase;font-weight:700;letter-spacing:.05em}
 .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
@@ -249,27 +254,23 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 <body>
 
 <!-- ============ GATE (choose who you are) ============ -->
-<div id="gate" class="gate" hidden>
+<div id="gate" class="gate" hidden role="dialog" aria-modal="true" aria-label="Sign in to pick">
+  <div class="gate-card">
   <div class="card">
     <div class="card-bd">
       <img src="brand/header-web.png" alt="Kansas Media HS Pick &rsquo;ems" class="gate-logo">
       <h1 id="gate-title" class="visually-hidden">Kansas Media High School Pick &rsquo;ems</h1>
       <div id="gate-note"></div>
-      <p class="hint">Tap your name to start picking. No password, no account &mdash; just claim your name once on this device.</p>
-      <div>
-        <div class="eyebrow" style="margin-bottom:7px">On the roster</div>
-        <div class="roster-list" id="roster-list"></div>
-      </div>
-      <div class="sep">or</div>
-      <label class="f">Add yourself
-        <input id="new-name" type="text" placeholder="Your name" maxlength="28" autocomplete="off">
-      </label>
-      <button class="btn" id="join-btn">Join the pool</button>
+      <p class="hint">Sign in with Google to make your picks. It takes one tap, there's no
+        password to remember, and your picks follow you to any device.</p>
+      <button class="btn" id="google-signin">Sign in with Google</button>
       <p class="err" id="gate-err"></p>
-      <div class="sep">commissioner</div>
-      <button class="btn ghost" id="admin-signin">Sign in as commissioner</button>
+      <p class="hint" style="font-size:12px">Your email is only visible to the commissioner.
+        Other players see your name and nothing else.</p>
     </div>
   </div>
+  </div>
+  <button class="gate-close" id="gate-close" aria-label="Close">Close</button>
 </div>
 
 <!-- ============ APP ============ -->
@@ -290,12 +291,13 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
         <span class="clock-label" id="clock-label">Picks lock in</span>
         <span class="clock-val" id="clock-val">&mdash;</span>
       </div>
-      <div class="whoami">
+      <div class="whoami" id="whoami">
         <div>
           <b id="me-name">&mdash;</b>
-          <div><button class="linkish" id="switch-user">not you?</button></div>
+          <div><button class="linkish" id="switch-user">sign out</button></div>
         </div>
       </div>
+      <button class="btn sm" id="signin-btn" hidden>Sign in to pick</button>
     </div>
   </header>
 
@@ -404,7 +406,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
-        <div class="card-hd"><h2>Roster</h2><span class="hint">Reset a player if they need to re-claim their name on a new phone.</span></div>
+        <div class="card-hd"><h2>Roster</h2><span class="hint">Put each player&rsquo;s Google address here and their existing record &mdash; picks, standings, everything &mdash; is theirs the moment they sign in. Emails are visible only to you.</span></div>
         <div class="card-bd twrap" id="adm-roster"></div>
       </div>
     </section>
@@ -444,7 +446,7 @@ const SEASON_PCT_MODE = "all";
    2. Firebase
    ========================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInAnonymously, signOut,
+import { getAuth, onAuthStateChanged, signOut,
          GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
          setPersistence, indexedDBLocalPersistence, browserLocalPersistence,
          browserSessionPersistence, inMemoryPersistence }
@@ -528,10 +530,10 @@ const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const S = {
   uid: null, email: null, isAdmin: false,
   me: null,                  // my player doc
-  players: [], weeks: [], scores: [], teams: [],
+  players: [], weeks: [], scores: [], teams: [], contacts: [],
   myPicks: {}, picksLoaded: false,   // weekId -> pick doc
   allPicks: [],              // admin only
-  view: "picks",
+  view: "picks", showGate: false,
   draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
   admWeekId: null, admDraft: null, admResults: {},
   boardWeekId: null,
@@ -566,31 +568,62 @@ setTimeout(() => {
 getRedirectResult(auth).catch(() => {});
 
 onAuthStateChanged(auth, async user => {
+  booted = true; S.ready = true; S.bootNote = null;
   if (!user) {
-    try { await ensurePersistence(); await signInAnonymously(auth); }
-    catch (e) {
-      booted = true; S.ready = true;
-      S.bootNote = IN_APP_BROWSER
-        ? "This page is open inside another app\u2019s browser, which blocks the sign-in it needs. Open it in Safari or Chrome instead."
-        : friendlyError(e);
-      render();
-    }
+    // Signed out is a normal state now: the slate and standings stay public.
+    S.uid = null; S.email = null; S.isAdmin = false; S.me = null;
+    subscribe();
     return;
   }
   S.uid = user.uid;
   S.email = user.email || null;
   S.isAdmin = !!(user.email && ADMIN_EMAILS.includes(user.email));
+  S.googleName = user.displayName || (user.email || "").split("@")[0];
   subscribe();
+  await ensurePlayer(user);
 });
+
+// Existing records keep their id, so their picks and standings stay attached.
+// A record is claimed by whichever Google account the commissioner assigned to
+// it; anyone with no assigned record simply gets a new one.
+async function ensurePlayer(user) {
+  const mail = (user.email || "").toLowerCase();
+  if (!mail) return;
+  const mine = S.players.find(p => (p.email || "").toLowerCase() === mail);
+
+  if (mine) {
+    if (mine.uid !== user.uid) {
+      try { await updateDoc(doc(db, "players", mine.id), { uid: user.uid }); }
+      catch (e) { console.warn("link:", e); }
+    }
+    return;
+  }
+  // nobody assigned this address — start a fresh record
+  const base = slug(user.displayName || mail.split("@")[0] || "player") || "player";
+  let id = base, n = 2;
+  while (S.players.some(p => p.id === id)) id = `${base}-${n++}`;
+  try {
+    await setDoc(doc(db, "players", id), {
+      id, uid: user.uid, email: mail,
+      name: (user.displayName || mail.split("@")[0]).slice(0, 40),
+      createdAt: serverTimestamp()
+    });
+  } catch (e) { console.warn("create player:", e); }
+}
 
 function subscribe() {
   unsubs.forEach(u => { try { u(); } catch {} });
   unsubs = [];
 
-  unsubs.push(onSnapshot(collection(db, "players"), snap => {
+  const playersRef = S.isAdmin || !S.email
+    ? collection(db, "players")
+    : query(collection(db, "players"), where("email", "==", S.email.toLowerCase()));
+  unsubs.push(onSnapshot(playersRef, snap => {
     S.players = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                   .sort((a, b) => a.name.localeCompare(b.name));
-    S.me = S.players.find(p => p.uid === S.uid) || null;
+    const was = S.me;
+    S.me = S.uid ? (S.players.find(p => p.uid === S.uid) || null) : null;
+    if (!was && S.me) S.showGate = false;      // just claimed a name
     booted = true; S.ready = true; S.bootNote = null;
     render();
   }, err => showFatal(err)));
@@ -612,7 +645,7 @@ function subscribe() {
     render();
   }, err => showFatal(err)));
 
-  unsubs.push(onSnapshot(query(collection(db, "picks"), where("uid", "==", S.uid)), snap => {
+  if (S.uid) unsubs.push(onSnapshot(query(collection(db, "picks"), where("uid", "==", S.uid)), snap => {
     S.myPicks = {};
     snap.docs.forEach(d => { const p = d.data(); S.myPicks[p.weekId] = p; });
     S.picksLoaded = true;
@@ -650,58 +683,12 @@ function renderGate() {
   } else {
     note.innerHTML = "";
   }
-  const list = $("#roster-list");
-  if (!S.players.length) {
-    list.innerHTML = '<span class="hint">Nobody yet — be the first.</span>';
-  } else {
-    list.innerHTML = S.players.map(p => {
-      const taken = p.uid && p.uid !== S.uid;
-      return `<button class="roster-btn" data-claim="${esc(p.id)}"${taken ? ' data-taken="1"' : ""}>${esc(p.name)}</button>`;
-    }).join("");
-  }
-  $("#admin-signin").textContent = S.isAdmin
-    ? `Commissioner: ${esc(S.email)} — now pick your name`
-    : IN_APP_BROWSER ? "Commissioner sign-in needs Safari or Chrome"
-    : "Sign in as commissioner";
-  $("#admin-signin").disabled = S.isAdmin || IN_APP_BROWSER;
+  const g = $("#google-signin");
+  g.textContent = IN_APP_BROWSER ? "Open in Safari or Chrome to sign in" : "Sign in with Google";
+  g.disabled = IN_APP_BROWSER;
 }
 
-$("#roster-list").addEventListener("click", async e => {
-  const btn = e.target.closest("[data-claim]");
-  if (!btn) return;
-  const p = S.players.find(x => x.id === btn.dataset.claim);
-  if (!p) return;
-  if (p.uid && p.uid !== S.uid) {
-    $("#gate-err").textContent =
-      `"${p.name}" is already claimed on another device. Ask the commissioner to reset it.`;
-    return;
-  }
-  try {
-    await updateDoc(doc(db, "players", p.id), { uid: S.uid });
-    $("#gate-err").textContent = "";
-  } catch (err) { $("#gate-err").textContent = friendlyError(err); }
-});
-
-$("#join-btn").addEventListener("click", async () => {
-  const name = $("#new-name").value.trim();
-  if (name.length < 2) { $("#gate-err").textContent = "Enter your name first."; return; }
-  const id = slug(name);
-  if (!id) { $("#gate-err").textContent = "Use at least a couple of letters."; return; }
-  if (S.players.some(p => p.id === id)) {
-    $("#gate-err").textContent = "That name is already on the roster — tap it above if it's you.";
-    return;
-  }
-  try {
-    await setDoc(doc(db, "players", id), {
-      id, name, uid: S.uid, createdAt: serverTimestamp()
-    });
-    $("#new-name").value = "";
-    $("#gate-err").textContent = "";
-  } catch (err) { $("#gate-err").textContent = friendlyError(err); }
-});
-$("#new-name").addEventListener("keydown", e => { if (e.key === "Enter") $("#join-btn").click(); });
-
-$("#admin-signin").addEventListener("click", async () => {
+$("#google-signin").addEventListener("click", async () => {
   const provider = new GoogleAuthProvider();
   try {
     await ensurePersistence();
@@ -717,11 +704,7 @@ $("#admin-signin").addEventListener("click", async () => {
 });
 
 $("#switch-user").addEventListener("click", async () => {
-  if (!confirm("Release your name on this device? You'll be able to claim it again here.")) return;
-  try {
-    if (S.me) await updateDoc(doc(db, "players", S.me.id), { uid: "" });
-    if (S.email) await signOut(auth);
-  } catch (err) { alert(friendlyError(err)); }
+  try { await signOut(auth); } catch (err) { alert(friendlyError(err)); }
 });
 
 /* ==========================================================
@@ -780,18 +763,26 @@ function renderPicks() {
     bar.hidden = true; return;
   }
 
-  const games  = liveGames(w);
-  const locked = isLocked(w);
+  const games      = liveGames(w);
+  const weekLocked = isLocked(w);           // the real state of the week
+  const canPick    = !!S.me && !weekLocked; // whether THIS viewer may pick
+  const locked     = !canPick;              // controls are inert either way
   const saved  = S.myPicks[w.id]?.picks || {};
   if (S.picksLoaded && !S.draft[w.id]) S.draft[w.id] = { ...saved };
-  const draft   = locked ? saved : (S.draft[w.id] || saved);
+  const draft   = canPick ? (S.draft[w.id] || saved) : saved;
   const results = w.results || {};
   const hasResults = w.scored && Object.keys(results).length > 0;
 
-  banner.innerHTML = !locked
+  banner.innerHTML = !S.me
+    ? `<div class="banner"><b>You're just looking.</b> Anyone can see the games and the standings &mdash;
+       <button class="linkish" id="banner-signin" style="color:inherit;font-size:inherit">sign in</button>
+       to make your picks. It takes one tap and no password.</div>`
+    : !weekLocked
     ? ""
     : hasResults
-      ? `<div class="banner"><b>${esc(w.label || "This week")} is final.</b> Your card is below with the misses marked.</div>`
+      ? (S.me && Object.keys(saved).length
+          ? `<div class="banner"><b>${esc(w.label || "This week")} is final.</b> Your card is below with the misses marked.</div>`
+          : `<div class="banner"><b>${esc(w.label || "This week")} is final.</b> Winners are marked in green.</div>`)
       : `<div class="banner"><b>Picks are locked.</b> Results go up once the games finish.</div>`;
 
   box.innerHTML = games.map((g, i) => {
@@ -801,15 +792,15 @@ function renderPicks() {
       const cls = ["prow", on ? "on" : "", res === which ? "won" : "",
                    res && res !== which ? "miss" : ""].filter(Boolean).join(" ");
       return `<button class="${cls}" data-g="${esc(g.id)}" data-s="${which}"
-        aria-pressed="${on}" ${locked ? "disabled" : ""}>
+        aria-pressed="${on}" ${weekLocked ? "disabled" : ""}>
         ${crest(team)}
         <span class="team">${esc(team)}</span>
         <span class="tag">${which}</span>
         <span class="ck"></span></button>`;
     };
-    const status = res ? "Final" : locked ? "Locked" : "";
+    const status = res ? "Final" : weekLocked ? "Locked" : "";
     return `<div class="game">
-      <div class="ghd"><span>Game ${pad2(i + 1)}</span><span class="gstatus">${status}</span></div>
+      ${status ? `<div class="ghd"><span class="gstatus">${status}</span></div>` : ""}
       ${row("away", g.away)}${row("home", g.home)}
     </div>`;
   }).join("");
@@ -818,9 +809,17 @@ function renderPicks() {
   $("#tally").innerHTML = `${n}<small>/${games.length} picked</small>`;
   bar.hidden = false;
   const btn = $("#save-btn");
-  btn.disabled = locked || n === 0;
+  if (!S.me) {
+    $("#tally").innerHTML = `${games.length}<small> games this week</small>`;
+    btn.disabled = false;
+    btn.textContent = "Sign in to pick";
+    $("#save-status").className = "status";
+    $("#save-status").textContent = "";
+    return;
+  }
+  btn.disabled = weekLocked || n === 0;
   btn.textContent = Object.keys(saved).length ? "Update picks" : "Submit picks";
-  if (locked) {
+  if (weekLocked) {
     $("#save-status").className = "status err";
     $("#save-status").textContent = "Locked";
     btn.textContent = "Locked";
@@ -840,8 +839,9 @@ $("#games").addEventListener("error", e => {
 }, true);
 
 $("#games").addEventListener("click", e => {
+  if (!S.me && e.target.closest(".prow")) { openGate(); return; }
   const b = e.target.closest(".prow"); if (!b || b.disabled) return;
-  const w = activeWeek(); if (!w || isLocked(w)) return;
+  const w = activeWeek(); if (!w || isLocked(w) || !S.me) return;
   const d = S.draft[w.id] || (S.draft[w.id] = {});
   d[b.dataset.g] = d[b.dataset.g] === b.dataset.s ? undefined : b.dataset.s;
   if (!d[b.dataset.g]) delete d[b.dataset.g];
@@ -851,7 +851,8 @@ $("#games").addEventListener("click", e => {
 });
 
 $("#save-btn").addEventListener("click", async () => {
-  const w = activeWeek(); if (!w || !S.me) return;
+  if (!S.me) { openGate(); return; }
+  const w = activeWeek(); if (!w) return;
   const st = $("#save-status"), btn = $("#save-btn");
   if (isLocked(w)) { st.className = "status err"; st.textContent = "Too late — picks are locked."; return; }
   btn.disabled = true; st.className = "status"; st.textContent = "Saving…";
@@ -893,6 +894,10 @@ function seasonRows() {
     return { ...r, wins: wins[r.playerId] || 0, denom, pct: pct(r.correct, denom) };
   }).sort((a, b) => b.pct - a.pct || b.correct - a.correct || a.name.localeCompare(b.name));
 }
+
+document.addEventListener("click", e => {
+  if (e.target && e.target.id === "banner-signin") openGate();
+});
 
 function renderRail() {
   const el = $("#prail"); if (!el) return;
@@ -1076,12 +1081,20 @@ function renderAdmin() {
     : '<div class="empty">No cards submitted for this week yet.</div>';
 
   renderTeams();
+  renderAdminRoster();
+}
 
-  // roster
+let rosterKey = null;
+function renderAdminRoster() {
+  const key = S.players.map(p => p.id + ":" + (p.uid ? 1 : 0)).join(",");
+  if (key === rosterKey) return;
+  rosterKey = key;
   $("#adm-roster").innerHTML = S.players.length ? `<table>
-    <thead><tr><th>Player</th><th>Device</th><th></th></tr></thead>
+    <thead><tr><th>Player</th><th>Email</th><th>Device</th><th></th></tr></thead>
     <tbody>${S.players.map(p => `<tr>
       <td>${esc(p.name)}</td>
+      <td><input data-pid="${esc(p.id)}" data-pk="email" value="${esc(p.email || "")}"
+        placeholder="their@gmail.com" autocomplete="off" style="min-width:180px"></td>
       <td><span class="pill ${p.uid ? "open" : "draft"}">${p.uid ? "claimed" : "unclaimed"}</span></td>
       <td style="text-align:right">
         <button class="btn ghost sm" data-reset="${esc(p.id)}">Reset</button>
@@ -1299,8 +1312,9 @@ $("#team-import").addEventListener("click", async () => {
   const fresh = list.filter(t => !S.teams.some(x => x.id === t.slug));
   // a school already in the library but still without a logo picks one up when
   // the manifest gains it, so logos uploaded later aren't stranded
-  const upgrade = list.filter(t => t.file &&
-    S.teams.some(x => x.id === t.slug && !x.logo));
+  const upgrade = list.filter(t => S.teams.some(x => x.id === t.slug && (
+        (t.file && !x.logo) ||
+        ((t.aliases || []).length && !(x.aliases || []).length))));
   if (!fresh.length && !upgrade.length) {
     st.textContent = `Nothing to add — all ${list.length} schools are already in the library with their logos.`; return;
   }
@@ -1316,16 +1330,33 @@ $("#team-import").addEventListener("click", async () => {
     for (let i = 0; i < work.length; i += 400) {   // Firestore caps a batch at 500
       const chunk = work.slice(i, i + 400);
       const b = writeBatch(db);
-      chunk.forEach(t => b.set(doc(db, "teams", t.slug), {
-        id: t.slug, name: t.name, logo: t.file ? "logos/" + t.file : "",
-        color: "", aliases: t.aliases || []
-      }, { merge: true }));
+      chunk.forEach(t => {
+        const existing = S.teams.find(x => x.id === t.slug);
+        const data = { id: t.slug, name: t.name };
+        if (t.file && !(existing && existing.logo)) data.logo = "logos/" + t.file;
+        if (!existing) data.color = "";
+        const aliases = (t.aliases || []).filter(a =>
+          !S.teams.some(x => x.id !== t.slug && x.id === slug(a)));
+        if (aliases.length) data.aliases = aliases;
+        b.set(doc(db, "teams", t.slug), data, { merge: true });
+      });
       await b.commit();
       st.textContent = `Saved ${Math.min(i + chunk.length, work.length)} of ${work.length}\u2026`;
     }
     st.textContent = `Done — ${fresh.length} added, ${upgrade.length} given a logo. ` +
       `Type a team name into a slate and its logo appears automatically.`;
   } catch (e) { st.textContent = friendlyError(e); }
+});
+
+$("#adm-roster").addEventListener("change", async e => {
+  const el = e.target; if (el.dataset.pk !== "email") return;
+  const mail = el.value.trim().toLowerCase();
+  if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(mail)) {
+    alert("That doesn't look like an email address."); renderAdminRoster(); return; }
+  const clash = S.players.find(p => p.id !== el.dataset.pid && (p.email || "") === mail && mail);
+  if (clash) { alert(`${clash.name} is already using that address.`); renderAdminRoster(); return; }
+  try { await updateDoc(doc(db, "players", el.dataset.pid), { email: mail }); }
+  catch (err) { alert(friendlyError(err)); }
 });
 
 $("#adm-roster").addEventListener("click", async e => {
@@ -1359,6 +1390,13 @@ window.addEventListener("beforeunload", e => {
 /* ==========================================================
    12. Shell
    ========================================================== */
+function openGate() { S.showGate = true; render(); }
+function closeGate() { S.showGate = false; render(); }
+$("#signin-btn").addEventListener("click", openGate);
+$("#gate-close").addEventListener("click", closeGate);
+$("#gate").addEventListener("click", e => { if (e.target === $("#gate")) closeGate(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.showGate) closeGate(); });
+
 $$(".tab").forEach(t => t.addEventListener("click", () => {
   S.view = t.dataset.view;
   render();
@@ -1367,23 +1405,22 @@ $$(".tab").forEach(t => t.addEventListener("click", () => {
 function render() {
   if (!S.ready) return;
 
-  if (!S.me) {
-    $("#app").hidden = true;
-    $("#gate").hidden = false;
-    renderGate();
-    return;
-  }
-  $("#gate").hidden = true;
   $("#app").hidden = false;
+  $("#gate").hidden = !S.showGate;
+  if (S.showGate) renderGate();
 
   const w = activeWeek();
   $("#brand-logo").alt = LEAGUE_NAME;
   $("#week-label").textContent = w
     ? `${w.label || "Week " + w.num}${w.scored ? " · final" : isLocked(w) ? " · locked" : ""}`
     : "No week open";
-  $("#me-name").textContent = S.me.name + (S.isAdmin ? " · commissioner" : "");
+  $("#whoami").hidden = !S.me;
+  $("#signin-btn").hidden = !!S.me;
+  if (S.me) $("#me-name").textContent = S.me.name + (S.isAdmin ? " · commissioner" : "");
   $("#tab-admin").hidden = !S.isAdmin;
+  $('.tab[data-view="mine"]').hidden = !S.me;
   if (!S.isAdmin && S.view === "admin") S.view = "picks";
+  if (!S.me && S.view === "mine") S.view = "picks";
 
   $$(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === S.view)));
   ["picks", "board", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
