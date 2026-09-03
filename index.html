@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
 :root{
-  --ground:#FFFFFF; --surface:#F4F5F6; --surface-2:#EAECEE;
+  --page:#EBEEF0; --ground:#FFFFFF; --surface:#F5F6F8; --surface-2:#E9ECEF;
   --ink:#0E1013; --muted:#666E78; --line:#D8DCE0; --line-2:#EAECEE;
   --nav:#111417; --nav-ink:#FFFFFF; --nav-muted:#9AA2AB; --nav-line:#2A2F35;
   --accent:#D50A0A; --accent-ink:#FFFFFF; --accent-wash:#FBEDED;
@@ -41,7 +41,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{background:var(--ground);color:var(--ink);
+body{background:var(--page);color:var(--ink);
   font:400 14px/1.4 Barlow,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   -webkit-font-smoothing:antialiased}
 h1,h2,h3,.disp{font-family:"Barlow Condensed",Barlow,"Arial Narrow",sans-serif;margin:0;text-wrap:balance}
@@ -108,6 +108,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
   border-bottom:2px solid var(--ink);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .card-hd h2{font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:-.005em}
 .card-bd{padding:0}
+#view-admin .card-bd{background:var(--ground);border:1px solid var(--line);border-radius:3px;padding:14px}
 .hint{color:var(--muted);font-size:12px;margin:0}
 .eyebrow{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:700;letter-spacing:.04em}
 
@@ -116,6 +117,8 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 @media (max-width:900px){.pcols{grid-template-columns:1fr;gap:26px}}
 .prail .rail-hd{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;
   text-transform:uppercase;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-bottom:8px}
+.prail .twrap{border:0;background:none}
+.prail{background:var(--ground);border:1px solid var(--line);border-radius:3px;padding:12px}
 .prail table{font-size:13px}
 .prail td{padding:5px 7px}
 .railnote{font-size:12px;color:var(--muted);padding:6px 0}
@@ -124,10 +127,16 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .myline b{font-family:"Barlow Condensed",sans-serif;font-size:17px;font-variant-numeric:tabular-nums}
 
 /* ---------- scoreboard list ---------- */
-.games{border-top:1px solid var(--line)}
-.game{border-bottom:1px solid var(--line);padding:5px 0}
-.ghd{display:flex;justify-content:flex-end;padding:2px 8px 0;
-  font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.04em}
+.games{display:flex;flex-direction:column;gap:8px}
+.game{border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--ground)}
+.game:focus-within{border-color:var(--muted)}
+.prow + .prow{border-top:1px solid var(--line-2)}
+.ghd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--line-2)}
+.gmatch{font-size:12.5px;font-weight:600;line-height:1.25}
+.gmatch em{font-style:normal;font-weight:400;color:var(--muted)}
+.gstatus{font-size:10px;text-transform:uppercase;font-weight:700;
+  letter-spacing:.04em;color:var(--accent);white-space:nowrap}
 .gstatus{color:var(--accent)}
 .prow{width:100%;background:none;border:0;padding:7px 8px;display:flex;align-items:center;gap:10px;
   text-align:left;border-left:3px solid transparent}
@@ -176,7 +185,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .savebar .btn.ghost{color:var(--nav-ink);border-color:var(--nav-line)}
 
 /* ---------- tables ---------- */
-.twrap{overflow-x:auto}
+.twrap{overflow-x:auto;background:var(--ground);border:1px solid var(--line);border-radius:3px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
 th{text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;
   text-transform:uppercase;color:var(--muted);letter-spacing:.03em;
@@ -223,7 +232,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   text-transform:uppercase;font-weight:700;letter-spacing:.05em}
 .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
 .err{color:var(--loss);font-size:13px;min-height:17px}
-.empty{color:var(--muted);font-size:13px;padding:20px 0}
+.empty{color:var(--muted);font-size:13px;padding:20px 14px;background:var(--ground);border:1px solid var(--line);border-radius:3px}
 .banner{background:var(--accent-wash);border-left:3px solid var(--accent);
   padding:9px 12px;font-size:13px;margin-bottom:12px}
 .adm-game{display:grid;grid-template-columns:22px 1fr 14px 1fr;gap:6px;align-items:center;margin-bottom:5px}
@@ -589,25 +598,31 @@ onAuthStateChanged(auth, async user => {
 async function ensurePlayer(user) {
   const mail = (user.email || "").toLowerCase();
   if (!mail) return;
-  const mine = S.players.find(p => (p.email || "").toLowerCase() === mail);
 
-  if (mine) {
-    if (mine.uid !== user.uid) {
-      try { await updateDoc(doc(db, "players", mine.id), { uid: user.uid }); }
+  // Ask the server directly — the local roster has not necessarily arrived yet,
+  // and assuming it had would create a second record for someone who has one.
+  let found = null;
+  try {
+    const snap = await getDocs(query(collection(db, "players"), where("email", "==", mail)));
+    if (!snap.empty) found = { id: snap.docs[0].id, ...snap.docs[0].data() };
+  } catch (e) { console.warn("player lookup:", e); return; }
+
+  if (found) {
+    if (found.uid !== user.uid) {
+      try { await updateDoc(doc(db, "players", found.id), { uid: user.uid }); }
       catch (e) { console.warn("link:", e); }
     }
     return;
   }
-  // nobody assigned this address — start a fresh record
-  const base = slug(user.displayName || mail.split("@")[0] || "player") || "player";
-  let id = base, n = 2;
-  while (S.players.some(p => p.id === id)) id = `${base}-${n++}`;
+
+  // Nobody assigned this address. Key the new record on the uid, which cannot
+  // collide with anyone else's.
   try {
-    await setDoc(doc(db, "players", id), {
-      id, uid: user.uid, email: mail,
-      name: (user.displayName || mail.split("@")[0]).slice(0, 40),
+    await setDoc(doc(db, "players", user.uid), {
+      id: user.uid, uid: user.uid, email: mail,
+      name: (user.displayName || mail.split("@")[0] || "Player").slice(0, 40),
       createdAt: serverTimestamp()
-    });
+    }, { merge: true });
   } catch (e) { console.warn("create player:", e); }
 }
 
@@ -615,10 +630,12 @@ function subscribe() {
   unsubs.forEach(u => { try { u(); } catch {} });
   unsubs = [];
 
-  const playersRef = S.isAdmin || !S.email
-    ? collection(db, "players")
-    : query(collection(db, "players"), where("email", "==", S.email.toLowerCase()));
-  unsubs.push(onSnapshot(playersRef, snap => {
+  // Signed out there is no roster to read, and the rules rightly refuse one.
+  const playersRef = S.isAdmin ? collection(db, "players")
+    : S.email ? query(collection(db, "players"), where("email", "==", S.email.toLowerCase()))
+    : null;
+  if (!playersRef) { S.players = []; S.me = null; }
+  if (playersRef) unsubs.push(onSnapshot(playersRef, snap => {
     S.players = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                   .sort((a, b) => a.name.localeCompare(b.name));
     const was = S.me;
@@ -800,7 +817,10 @@ function renderPicks() {
     };
     const status = res ? "Final" : weekLocked ? "Locked" : "";
     return `<div class="game">
-      ${status ? `<div class="ghd"><span class="gstatus">${status}</span></div>` : ""}
+      <div class="ghd">
+        <span class="gmatch">${esc(g.away)} <em>at</em> ${esc(g.home)}</span>
+        <span class="gstatus">${status}</span>
+      </div>
       ${row("away", g.away)}${row("home", g.home)}
     </div>`;
   }).join("");
