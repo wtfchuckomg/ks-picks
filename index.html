@@ -550,7 +550,7 @@ const S = {
   allPicks: [],              // admin only
   view: "picks", showGate: false,
   draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
-  admWeekId: null, admDraft: null, admResults: {},
+  admWeekId: null, admDraft: null,
   boardWeekId: null,
   ready: false
 };
@@ -1057,7 +1057,6 @@ function renderAdmin() {
           games: Array.from({ length: GAMES_PER_WEEK }, (_, i) =>
             stored.games?.[i] || { id: "g" + (i + 1), away: "", home: "" }) }
       : blankWeek(nextNum);
-    S.admResults = { ...(stored?.results || {}) };
 
     $("#adm-num").value = S.admDraft.num;
     $("#adm-label").value = S.admDraft.label || "";
@@ -1078,12 +1077,13 @@ function renderAdmin() {
 
   // results
   const games = S.admDraft.games.filter(g => g.away.trim() && g.home.trim());
+  const saved = (stored && stored.results) || {};   // the server's copy, always
   $("#adm-results").innerHTML = games.length ? games.map((g, i) => `
     <div class="res-row"><span class="n">${pad2(i + 1)}</span>
       <div class="res-opts">
-        <button class="res-opt" data-r="${esc(g.id)}" data-v="away" aria-pressed="${S.admResults[g.id] === "away"}">${esc(g.away)}</button>
-        <button class="res-opt" data-r="${esc(g.id)}" data-v="home" aria-pressed="${S.admResults[g.id] === "home"}">${esc(g.home)}</button>
-        <button class="res-opt clear" data-r="${esc(g.id)}" data-v="" aria-pressed="${!S.admResults[g.id]}">—</button>
+        <button class="res-opt" data-r="${esc(g.id)}" data-v="away" aria-pressed="${saved[g.id] === "away"}">${esc(g.away)}</button>
+        <button class="res-opt" data-r="${esc(g.id)}" data-v="home" aria-pressed="${saved[g.id] === "home"}">${esc(g.home)}</button>
+        <button class="res-opt clear" data-r="${esc(g.id)}" data-v="" aria-pressed="${!saved[g.id]}">—</button>
       </div></div>`).join("")
     : '<div class="empty">Add the games above first.</div>';
 
@@ -1145,19 +1145,20 @@ $("#adm-deadline").addEventListener("input", e => {
 $("#adm-results").addEventListener("click", async e => {
   const b = e.target.closest("[data-r]"); if (!b) return;
   const week = S.weeks.find(w => w.id === S.admWeekId);
-  if (b.dataset.v) S.admResults[b.dataset.r] = b.dataset.v;
-  else delete S.admResults[b.dataset.r];
-  renderAdmin();
   const st = $("#adm-score-status");
   if (!week) {
     st.className = "status err";
     st.textContent = "Save the week first — there is nothing to score against yet.";
     return;
   }
+  // build on what the server holds, never on a stale local copy
+  const next = { ...(week.results || {}) };
+  if (b.dataset.v) next[b.dataset.r] = b.dataset.v;
+  else delete next[b.dataset.r];
   const g = (week.games || []).find(x => x.id === b.dataset.r);
   const label = !b.dataset.v ? "Winner cleared"
     : `${b.dataset.v === "away" ? (g ? g.away : "Away") : (g ? g.home : "Home")} wins`;
-  await commitResults(week, { ...S.admResults }, label);
+  await commitResults(week, next, label);
 });
 
 // Scoring is incremental: whatever has a winner counts, the rest waits. That
@@ -1248,7 +1249,7 @@ $("#adm-clear").addEventListener("click", async () => {
   const scores = S.scores.filter(s => s.weekId === week.id);
   const label  = week.label || "Week " + week.num;
   const wins   = Object.keys(week.results || {}).length;
-  const local  = Object.keys(S.admResults || {}).length;
+  const local  = wins;
   if (!cards.length && !scores.length && !wins && !local && !week.scored) {
     admSay(`${label} is already clear — no cards, scores or winners.`, "ok"); return;
   }
@@ -1268,7 +1269,6 @@ $("#adm-clear").addEventListener("click", async () => {
     batch.set(doc(db, "weeks", week.id),
       { results: {}, scored: false, scoredGames: 0 }, { merge: true });
     await batch.commit();
-    S.admResults = {};
     delete S.draft[week.id];
     admSay(`Cleared ${label}. ${cards.length} card${cards.length === 1 ? "" : "s"} deleted \u2014 the week is open for picks again.`, "ok");
   } catch (e) { admSay(friendlyError(e), "err"); }
