@@ -393,13 +393,10 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
-        <div class="card-hd"><h2>Enter results</h2><span class="hint">Tap the winner of each game, then post the scores.</span></div>
+        <div class="card-hd"><h2>Enter results</h2><span class="hint">Tap a winner and it saves immediately &mdash; come back as more games finish. Standings update each time.</span></div>
         <div class="card-bd">
           <div id="adm-results"></div>
-          <div class="row" style="margin-top:14px">
-            <div class="shrink"><button class="btn lamp" id="adm-score">Post scores for this week</button></div>
-            <span class="status shrink" id="adm-score-status" style="flex:1 1 100%"></span>
-          </div>
+          <p class="status" id="adm-score-status" style="margin-top:12px"></p>
         </div>
       </div>
 
@@ -1145,12 +1142,53 @@ $("#adm-label").addEventListener("input", e => { S.admDraft.label = e.target.val
 $("#adm-deadline").addEventListener("input", e => {
   S.admDraft.deadline = e.target.value ? new Date(e.target.value) : null;
 });
-$("#adm-results").addEventListener("click", e => {
+$("#adm-results").addEventListener("click", async e => {
   const b = e.target.closest("[data-r]"); if (!b) return;
+  const week = S.weeks.find(w => w.id === S.admWeekId);
   if (b.dataset.v) S.admResults[b.dataset.r] = b.dataset.v;
   else delete S.admResults[b.dataset.r];
   renderAdmin();
+  const st = $("#adm-score-status");
+  if (!week) {
+    st.className = "status err";
+    st.textContent = "Save the week first — there is nothing to score against yet.";
+    return;
+  }
+  const g = (week.games || []).find(x => x.id === b.dataset.r);
+  const label = !b.dataset.v ? "Winner cleared"
+    : `${b.dataset.v === "away" ? (g ? g.away : "Away") : (g ? g.home : "Home")} wins`;
+  await commitResults(week, { ...S.admResults }, label);
 });
+
+// Scoring is incremental: whatever has a winner counts, the rest waits. That
+// lets results go in as games finish rather than all at once on Friday night.
+async function commitResults(week, results, note) {
+  const st = $("#adm-score-status");
+  const games   = liveGames({ games: (week.games && week.games.length) ? week.games
+                                     : (S.admDraft ? S.admDraft.games : []) });
+  const decided = games.filter(g => results[g.id]);
+  const cards   = S.allPicks.filter(p => p.weekId === week.id);
+
+  st.className = "status"; st.textContent = "Saving\u2026";
+  try {
+    const batch = writeBatch(db);
+    cards.forEach(p => {
+      const correct = decided.reduce(
+        (a, g) => a + (p.picks?.[g.id] === results[g.id] ? 1 : 0), 0);
+      batch.set(doc(db, "scores", `${week.id}__${p.playerId}`), {
+        weekId: week.id, playerId: p.playerId, name: p.name,
+        correct, total: decided.length
+      });
+    });
+    batch.set(doc(db, "weeks", week.id), {
+      results, scored: decided.length > 0, scoredGames: decided.length
+    }, { merge: true });
+    await batch.commit();
+    st.className = "status ok";
+    st.textContent = `${note} \u2014 ${decided.length} of ${games.length} games in, ` +
+      `${cards.length} card${cards.length === 1 ? "" : "s"} scored. Standings are live.`;
+  } catch (e) { st.className = "status err"; st.textContent = friendlyError(e); }
+}
 
 function admWeekPayload() {
   const num = +$("#adm-num").value || 1;
@@ -1202,35 +1240,6 @@ $("#adm-unpublish").addEventListener("click", async () => {
   catch (e) { admSay(friendlyError(e), "err"); }
 });
 
-$("#adm-score").addEventListener("click", async () => {
-  const st = $("#adm-score-status");
-  const week = S.weeks.find(w => w.id === S.admWeekId);
-  if (!week) { st.className = "status err"; st.textContent = "Save the week first."; return; }
-  const games = liveGames({ games: S.admDraft.games });
-  const decided = games.filter(g => S.admResults[g.id]);
-  if (!decided.length) { st.className = "status err"; st.textContent = "Tap a winner for at least one game."; return; }
-  if (decided.length < games.length &&
-      !confirm(`${games.length - decided.length} game(s) have no winner yet. They'll be left out of this week's score. Post anyway?`)) return;
-
-  st.className = "status"; st.textContent = "Posting…";
-  try {
-    const cards = S.allPicks.filter(p => p.weekId === week.id);
-    const batch = writeBatch(db);
-    cards.forEach(p => {
-      const correct = decided.reduce((a, g) => a + (p.picks?.[g.id] === S.admResults[g.id] ? 1 : 0), 0);
-      batch.set(doc(db, "scores", `${week.id}__${p.playerId}`), {
-        weekId: week.id, playerId: p.playerId, name: p.name,
-        correct, total: decided.length
-      });
-    });
-    batch.set(doc(db, "weeks", week.id), {
-      results: S.admResults, scored: true, scoredGames: decided.length
-    }, { merge: true });
-    await batch.commit();
-    st.className = "status ok";
-    st.textContent = `Scored ${cards.length} card${cards.length === 1 ? "" : "s"} over ${decided.length} games. Standings are live.`;
-  } catch (e) { st.className = "status err"; st.textContent = friendlyError(e); }
-});
 
 $("#adm-clear").addEventListener("click", async () => {
   const week = S.weeks.find(w => w.id === S.admWeekId);
