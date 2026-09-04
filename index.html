@@ -35,7 +35,7 @@
   --ink:#0E1013; --muted:#666E78; --line:#D8DCE0; --line-2:#EAECEE;
   --nav:#111417; --nav-ink:#FFFFFF; --nav-muted:#9AA2AB; --nav-line:#2A2F35;
   --accent:#D50A0A; --accent-ink:#FFFFFF; --accent-wash:#FBEDED;
-  --win:#0F7A34; --loss:#C0271F;
+  --win:#0F7A34; --loss:#C0271F; --win-wash:#E7F4EB; --loss-wash:#FBEAE8;
   --brand-bar:#FFFFFF; --brand-ink:#0E1013; --brand-muted:#5A626B; --brand-line:#DFE3E7;
   color-scheme:light;
 }
@@ -154,15 +154,22 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .ck{flex:0 0 22px;width:22px;height:22px;border:2px solid var(--line);display:grid;place-items:center;border-radius:2px}
 .ck::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--accent-ink);
   border-bottom:2.5px solid var(--accent-ink);transform:rotate(-45deg) translate(1px,-1px);opacity:0}
-.prow.on{background:var(--accent-wash);border-left-color:var(--accent)}
+/* A pick with no result yet is shown by its tick and bolder name only —
+   colour is reserved for a verdict. */
+.prow.on{background:none;border-left-color:transparent}
 .prow.on .team{font-weight:700}
 .prow.on .chip{background:var(--accent);color:var(--accent-ink)}
 .prow.on .ck{background:var(--accent);border-color:var(--accent)}
 .prow.on .ck::after{opacity:1}
-.prow.won .team{color:var(--win)}
-.prow.on.miss .team{color:var(--loss)}
+/* The verdict is about YOUR pick, so only a picked row is coloured: green when
+   it came in, red when it did not. A row you did not pick stays plain, so a
+   miss is not answered by lighting up the team you should have taken. */
+.prow.on.won{background:var(--win-wash);border-left-color:var(--win)}
+.prow.on.won .team{color:var(--win);font-weight:700}
+.prow.on.won .chip,.prow.on.won .ck{background:var(--win);border-color:var(--win)}
+.prow.on.miss{background:var(--loss-wash);border-left-color:var(--loss)}
+.prow.on.miss .team{color:var(--loss);font-weight:700}
 .prow.on.miss .chip,.prow.on.miss .ck{background:var(--loss);border-color:var(--loss)}
-.prow.on.miss{background:none;border-left-color:var(--loss)}
 
 /* ---------- submit bar ---------- */
 .savebar{position:sticky;bottom:0;margin-top:0;background:var(--nav);color:var(--nav-ink);
