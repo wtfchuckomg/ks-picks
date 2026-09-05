@@ -413,6 +413,28 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
+        <div class="card-hd"><h2>Tell everyone</h2><span class="hint">Addresses go in BCC, so nobody sees anyone else&rsquo;s.</span></div>
+        <div class="card-bd">
+          <div class="row" style="margin-bottom:10px">
+            <label class="f">Subject<input id="mail-subject" type="text" autocomplete="off"></label>
+          </div>
+          <label class="f" style="margin-bottom:10px">Message
+            <textarea id="mail-body" rows="7" style="font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:2px;background:var(--ground);color:var(--ink);width:100%"></textarea>
+          </label>
+          <div class="row">
+            <div class="shrink"><button class="btn" id="mail-gmail">Open in Gmail</button></div>
+            <div class="shrink"><button class="btn ghost" id="mail-open">Open in my mail app</button></div>
+            <div class="shrink"><button class="btn ghost" id="mail-copy-to">Copy addresses</button></div>
+            <div class="shrink"><button class="btn ghost" id="mail-copy-msg">Copy message</button></div>
+            <span class="status shrink" id="mail-status" style="flex:1 1 100%"></span>
+            <textarea id="mail-fallback" rows="3" readonly hidden style="flex:1 1 100%;font:inherit;
+              padding:8px 10px;border:1px solid var(--line);border-radius:2px;
+              background:var(--surface);color:var(--ink)"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that. Use <b>Also known as</b> for the short names you actually type, like SM North.</span></div>
         <div class="card-bd">
           <div class="row" style="margin-bottom:12px">
@@ -1115,6 +1137,7 @@ function renderAdmin() {
     }).join("")}</tbody></table>`
     : '<div class="empty">No cards submitted for this week yet.</div>';
 
+  renderMail();
   renderTeams();
   renderAdminRoster();
 }
@@ -1280,6 +1303,96 @@ $("#adm-clear").addEventListener("click", async () => {
     admSay(`Cleared ${label}. ${cards.length} card${cards.length === 1 ? "" : "s"} deleted \u2014 the week is open for picks again.`, "ok");
   } catch (e) { admSay(friendlyError(e), "err"); }
 });
+
+let mailKey = null;
+function renderMail() {
+  const wk = activeWeek() || S.weeks.filter(w => w.published).slice(-1)[0];
+  const withMail = S.players.filter(p => (p.email || "").includes("@"));
+  const key = (wk ? wk.id : "-") + ":" + withMail.length;
+  if (key === mailKey) return;              // don't overwrite an edited draft
+  mailKey = key;
+
+  const label = wk ? (wk.label || "Week " + wk.num) : "This week";
+  const when  = wk && deadlineDate(wk)
+    ? deadlineDate(wk).toLocaleString(undefined,
+        { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "";
+  const games = wk ? liveGames(wk).length : 0;
+
+  $("#mail-subject").value = `${label} picks are open — ${LEAGUE_NAME}`;
+  $("#mail-body").value =
+    `${label} is up${games ? ` with ${games} game${games === 1 ? "" : "s"}` : ""}.\n\n` +
+    (when ? `Picks lock ${when}. After that the board is closed, so get them in.\n\n` : "") +
+    `Make your picks: ${location.origin}${location.pathname}\n\n` +
+    `Sign in with Google — no password, and your picks follow you to any device.\n`;
+  $("#mail-status").textContent =
+    `${withMail.length} player${withMail.length === 1 ? "" : "s"} with an address on file` +
+    (S.players.length > withMail.length
+      ? ` · ${S.players.length - withMail.length} without one, add it in the Roster` : "");
+  $("#mail-status").className = "status";
+}
+
+function mailAddresses() {
+  return S.players.map(p => (p.email || "").trim())
+                  .filter(e => e.includes("@")).join(",");
+}
+async function copyText(text, msg) {
+  const st = $("#mail-status");
+  try {
+    await navigator.clipboard.writeText(text);
+    st.className = "status ok"; st.textContent = msg;
+    $("#mail-fallback").hidden = true;
+    return;
+  } catch { /* some browsers refuse without a trusted gesture */ }
+  // Give them something to select rather than telling them to find it themselves.
+  const box = $("#mail-fallback");
+  box.hidden = false; box.value = text; box.focus(); box.select();
+  st.className = "status";
+  st.textContent = "Your browser blocked the clipboard — the text is selected below, press " +
+    (navigator.platform.startsWith("Mac") ? "\u2318C" : "Ctrl+C") + ".";
+}
+
+$("#mail-gmail").addEventListener("click", () => {
+  const to = mailAddresses();
+  const st = $("#mail-status");
+  if (!to) { st.className = "status err"; st.textContent = "No addresses on file yet — add them in the Roster."; return; }
+  // Gmail's own compose window: no mail client needed, and it takes far longer
+  // recipient lists than a mailto link. BCC, so nobody sees anyone else.
+  const url = "https://mail.google.com/mail/?view=cm&fs=1"
+    + "&bcc=" + encodeURIComponent(to)
+    + "&su="  + encodeURIComponent($("#mail-subject").value)
+    + "&body=" + encodeURIComponent($("#mail-body").value);
+  window.open(url, "_blank", "noopener");
+  st.className = "status ok";
+  st.textContent = `Gmail opened with ${to.split(",").length} addresses in BCC. Check BCC, then send.`;
+});
+
+$("#mail-open").addEventListener("click", () => {
+  const to = mailAddresses();
+  const st = $("#mail-status");
+  if (!to) { st.className = "status err"; st.textContent = "No addresses on file yet — add them in the Roster."; return; }
+  // BCC, never To: players must not see each other's addresses
+  const url = "mailto:?bcc=" + encodeURIComponent(to)
+    + "&subject=" + encodeURIComponent($("#mail-subject").value)
+    + "&body=" + encodeURIComponent($("#mail-body").value);
+  if (url.length > 1800) {
+    st.className = "status err";
+    st.textContent = "Too many addresses for a mail link — use Copy addresses and paste them into BCC yourself.";
+    return;
+  }
+  location.href = url;
+  st.className = "status ok";
+  st.textContent = "Opening your email app — check the addresses are in BCC before sending.";
+});
+
+$("#mail-copy-to").addEventListener("click", () => {
+  const to = mailAddresses();
+  if (!to) { const st = $("#mail-status"); st.className = "status err";
+    st.textContent = "No addresses on file yet."; return; }
+  copyText(to, `${to.split(",").length} addresses copied — paste them into BCC.`);
+});
+$("#mail-copy-msg").addEventListener("click", () =>
+  copyText($("#mail-subject").value + "\n\n" + $("#mail-body").value, "Message copied."));
 
 let teamsKey = null;
 function renderTeams() {

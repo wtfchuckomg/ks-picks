@@ -90,6 +90,72 @@ box, so this works before you deploy anything.
 
 ---
 
+## Signing in
+
+Everyone signs in with Google. There is no password to manage, no name to claim,
+and picks follow a person to any device they sign in on. You are the commissioner
+because your address is in `ADMIN_EMAILS` and in the rules — nothing else marks
+you out.
+
+### Carrying an existing player over
+
+A record belongs to whichever Google address is written against it. To move
+someone who was already playing:
+
+1. Commissioner → **Roster**
+2. Type their Google address into the **Email** box on their row
+3. Next time they sign in, that record is theirs — same name, same picks, same
+   standings
+
+Anyone signing in with an address you have not assigned simply gets a new record,
+named from their Google account. So assign the addresses of existing players
+first, then send the link.
+
+An address can only be attached to one record, and only the account that owns it
+can claim it — a player cannot take someone else's record, and signing in cannot
+rename or alter one.
+
+## Telling everyone picks are open
+
+Commissioner → **Tell everyone**. The subject and message fill themselves in from
+the open week — its name, how many games, when picks lock, and the link — and you
+can edit either before sending.
+
+**Open in Gmail** opens Gmail's own compose window with everything filled in and
+every address in **BCC**, so no player sees anyone else's. Nothing is installed
+and it works on any machine you're signed into Gmail on. **Open in my mail app**
+does the same through whatever mail client your computer defaults to.
+
+Either way, check the addresses landed in BCC before sending — some clients
+rearrange fields.
+
+If you have more addresses than a mail link can carry, or your browser has no
+mail app attached, use **Copy addresses** and paste them into BCC yourself.
+**Copy message** takes the text. If the browser refuses the clipboard, the text
+appears in a box below, already selected.
+
+Only players with an address on file are included — the panel says how many are
+missing one, and you add those in the Roster.
+
+This sends from your own mail account. Sending from the site itself would need a
+mail service and the paid Firebase plan; for a pool this size your own client is
+simpler and lands better.
+
+## Who can see what
+
+The site is public. Anyone with the link sees this week's games, the countdown
+and the standings without signing in — useful for posting the link anywhere.
+
+Picking requires a Google sign-in. Tapping a team, or the Submit button, brings
+up the sign-in card; it closes with Escape, the Close link or a click outside.
+
+Players never see each other's names or addresses anywhere in the app. Names
+appear only in the standings, which is the point of them.
+
+Nobody ever sees anyone else's picks. Standings are built from separate score
+documents that hold a name and a count and nothing more, so making them public
+exposes no picks. Only you, signed in with Google, can read the cards themselves.
+
 ## Running a week
 
 1. Open the app, click **Sign in as commissioner**, sign in with Google, then
@@ -98,11 +164,13 @@ box, so this works before you deploy anything.
    Type the 15 matchups as *away team* at *home team*.
 3. **Save week** keeps it as a draft nobody can see. **Publish to players** makes
    it live and starts the countdown.
-4. Send everyone the link. They tap their name once, tap a winner in each game,
+4. Send everyone the link. They sign in with Google, tap a winner in each game,
    and hit Submit. They can change picks freely until the deadline — and not one
    second after.
-5. After the games, **Enter results** → tap each winner → **Post scores**.
-   Standings update instantly for everybody.
+5. As games finish, **Enter results** → tap the winner. Each tap saves on its
+   own and the standings update straight away, so you can post Thursday's games
+   on Thursday and come back on Saturday for the rest. Scores count whatever has
+   a winner so far, and re-tapping corrects a mistake.
 
 ## The site switcher
 
@@ -168,6 +236,20 @@ and shows initials until a logo exists.
 
 To add one by hand: Commissioner → Teams → paste an image URL, or drop a file
 into `logos/` and enter `logos/yourfile.png`.
+
+### Short names
+
+Nobody types "Shawnee Mission North" every week. The **Also known as** column
+takes a comma-separated list of the short names you actually use — `SM North,
+SMN` — and any of them pulls up that school's logo. The slate still shows
+whatever you typed, so "SM North" stays "SM North" on the board; only the crest
+is looked up.
+
+Already set up: SM North / SMW, BV / BV West / BVNW / BVSW, St. James,
+Aquinas, Bishop Carroll, Wichita Trinity, Topeka Hayden and a few more.
+
+A short name can only belong to one school. If you try to give one that another
+team already uses, it tells you rather than quietly stealing it.
 
 ## If you mess up
 
