@@ -222,11 +222,15 @@ Then, once only: **Commissioner → Teams → Import Kansas schools.** That load
 215 schools into the library. After that, typing a school into a slate shows
 its logo automatically — there is nothing to do per week.
 
-Crests fall back in three steps, so the board never looks broken:
+A crest is found by filename, so adding one means dropping
+`logos/<school-name>.png` into the repo — lowercase, words separated by dashes,
+apostrophes and periods removed. St. Mary's is `st-marys.png`. Nothing to edit
+afterwards.
 
-1. the school's logo, if one is set
-2. the school's colour behind its initials, if you set a colour
-3. plain initials
+The lookup tries, in order: the school's name, the name as typed into the slate,
+any short name from **Also known as**, a link pasted into the record, and finally
+`logos/kshelmet.png` — the Kansas helmet, shown for any school whose own crest
+is not in the library yet.
 
 Coverage is 215 of roughly 340 Kansas football programs. The gap is mostly
 small and 8-man schools that FieldLevel doesn't carry, and 48 schools in the

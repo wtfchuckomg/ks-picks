@@ -478,6 +478,9 @@ const ADMIN_EMAILS = ["chuck8303@gmail.com"];
 const BRAND_NAME      = "Kansas Media";
 const BRAND_KICKER    = "High School Pick \u2019ems";
 const LEAGUE_NAME     = "Kansas Media High School Pick \u2019ems";
+
+// Shown for any school whose own logo is not in logos/ yet.
+const PLACEHOLDER_CREST = "logos/kshelmet.png";
 const GAMES_PER_WEEK  = 15;
 
 // "all"    — season % counts every game of every scored week, so a week
@@ -521,11 +524,36 @@ function team(name) {
       || null;
 }
 const safeColor = c => /^#[0-9A-Fa-f]{3,8}$/.test(String(c || "")) ? c : null;
+// A logo is found by its filename, so dropping logos/<school-name>.png into the
+// repo is all it takes — no record to edit, no path to paste. Apostrophes and
+// periods are dropped before separating, so St. Mary's -> st-marys.
+const logoSlug = s => String(s).toLowerCase()
+  .replace(/['\u2019.]/g, "")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-|-$/g, "");
+
 function crest(name) {
   const t = team(name), c = safeColor(t && t.color);
-  if (t && t.logo) return `<span class="chip logo"><img src="${esc(t.logo)}" alt=""
-    loading="lazy" data-mono="${esc(mono(name))}"></span>`;
-  return `<span class="chip"${c ? ` style="background:${c};color:#fff"` : ""}>${esc(mono(name))}</span>`;
+  // Try the school's own name, then whatever was typed, then any short name —
+  // a file may have been named for the abbreviation the slate uses.
+  const names = [t && t.name, name, ...((t && t.aliases) || [])].filter(Boolean);
+  const seen = new Set(), tries = [];
+  names.forEach(n => {
+    const sl = logoSlug(n);
+    if (!sl || seen.has(sl)) return;
+    seen.add(sl);
+    tries.push("logos/" + sl + ".png", "logos/" + sl + ".jpg");
+  });
+  // A file in logos/ wins over a link pasted into the record: the files are
+  // ours and stay put, a hosted link is someone else's and can vanish.
+  const explicit = t && /^https?:/i.test(t.logo || "") ? t.logo : "";
+  if (explicit) tries.push(explicit);
+  // A school with no crest yet gets the Kansas helmet rather than bare initials,
+  // so a slate looks finished while the library is still filling in.
+  tries.push(PLACEHOLDER_CREST);
+  return `<span class="chip logo"><img src="${esc(tries[0])}" alt="" loading="lazy"
+    data-mono="${esc(mono(name))}"${c ? ` data-color="${esc(c)}"` : ""}
+    data-try="${esc(tries.slice(1).join("|"))}"></span>`;
 }
 const mono = s => { const w = String(s).replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/);
   return (w.length > 1 ? w.slice(0, 3).map(x => x[0]).join("")
@@ -890,9 +918,19 @@ function renderPicks() {
 document.addEventListener("error", e => {
   const img = e.target;
   if (!img || img.tagName !== "IMG" || !img.closest(".chip.logo")) return;
+  const queue = (img.dataset.try || "").split("|").filter(Boolean);
+  if (queue.length) {                       // work through the other spellings
+    img.dataset.try = queue.slice(1).join("|");
+    img.src = queue[0];
+    return;
+  }
   const box = img.parentNode;
   box.classList.remove("logo");
   box.textContent = img.dataset.mono || "";
+  if (img.dataset.color) {
+    box.style.background = img.dataset.color;
+    box.style.color = "#fff";
+  }
 }, true);
 
 $("#games").addEventListener("click", e => {
