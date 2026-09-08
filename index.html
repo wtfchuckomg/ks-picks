@@ -139,15 +139,15 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .gstatus{font-size:10px;text-transform:uppercase;font-weight:700;
   letter-spacing:.04em;color:var(--accent);white-space:nowrap}
 .gstatus{color:var(--accent)}
-.prow{width:100%;background:none;border:0;padding:9px 10px;display:flex;align-items:center;gap:11px;
+.prow{width:100%;background:none;border:0;padding:7px 10px;display:flex;align-items:center;gap:13px;
   text-align:left;border-left:3px solid transparent}
 .prow:hover:not(:disabled){background:var(--surface)}
 .prow:disabled{cursor:default}
-.chip{flex:0 0 46px;height:36px;background:var(--surface-2);display:grid;place-items:center;
-  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--muted);
+.chip{flex:0 0 65px;height:65px;background:var(--surface-2);display:grid;place-items:center;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;color:var(--muted);
   border-radius:2px}
 .chip.logo{background:none}
-.chip.logo img{width:36px;height:36px;object-fit:contain;display:block}
+.chip.logo img{width:65px;height:65px;object-fit:contain;display:block}
 .prow.on .chip.logo{background:none}
 .team{flex:1 1 auto;font-weight:500;font-size:16.5px;line-height:1.25}
 .tag{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.03em}
@@ -542,7 +542,7 @@ function crest(name) {
     const sl = logoSlug(n);
     if (!sl || seen.has(sl)) return;
     seen.add(sl);
-    tries.push("logos/" + sl + ".png", "logos/" + sl + ".jpg");
+    tries.push("logos/" + sl + ".png");   // png only: crests need transparency
   });
   // A file in logos/ wins over a link pasted into the record: the files are
   // ours and stay put, a hosted link is someone else's and can vanish.
