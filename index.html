@@ -449,6 +449,22 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
       </div>
 
       <div class="card">
+        <div class="card-hd"><h2>Merge players</h2><span class="hint">One person, two records &mdash; usually one from before Google sign-in. The newer record is kept and the older one&rsquo;s weeks move onto it.</span></div>
+        <div class="card-bd">
+          <div id="merge-list"></div>
+          <div class="row" style="margin-top:12px">
+            <label class="f">Or fold<select id="merge-from"></select></label>
+            <label class="f">into<select id="merge-into"></select></label>
+            <div class="shrink"><button class="btn ghost" id="merge-add">Add to list</button></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <div class="shrink"><button class="btn" id="merge-run">Merge selected</button></div>
+            <span class="status shrink" id="merge-status" style="flex:1 1 100%"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-hd"><h2>Roster</h2><span class="hint">Put each player&rsquo;s Google address here and their existing record &mdash; picks, standings, everything &mdash; is theirs the moment they sign in. Emails are visible only to you.</span></div>
         <div class="card-bd twrap" id="adm-roster"></div>
       </div>
@@ -1177,6 +1193,7 @@ function renderAdmin() {
 
   renderMail();
   renderTeams();
+  renderMerge();
   renderAdminRoster();
 }
 
@@ -1581,6 +1598,213 @@ $("#team-prune").addEventListener("click", async () => {
     }
     st.textContent = `Done — ${used.size} team${used.size === 1 ? "" : "s"} left, the ones your weeks actually use.`;
   } catch (e) { st.textContent = friendlyError(e); }
+});
+
+// ---------------- Merging duplicate players ----------------
+// Records are gathered from both the roster and the score documents, since a
+// player removed from the roster can still own weeks in the standings.
+const NICKNAMES = { chuck:"charles", charlie:"charles", steve:"steven", stevie:"steven",
+  sully:"sullivan", wes:"weston", bill:"william", billy:"william", will:"william",
+  mike:"michael", matt:"matthew", tom:"thomas", tommy:"thomas", jim:"james",
+  jimmy:"james", bob:"robert", rob:"robert", dan:"daniel", danny:"daniel",
+  dave:"david", joe:"joseph", pat:"patrick", ben:"benjamin", nick:"nicholas",
+  chris:"christopher", tony:"anthony", josh:"joshua", jake:"jacob", zach:"zachary",
+  sam:"samuel", alex:"alexander", andy:"andrew", drew:"andrew", greg:"gregory",
+  jeff:"jeffrey", jon:"jonathan", ken:"kenneth", rick:"richard", rich:"richard",
+  ron:"ronald", tim:"timothy", trey:"trey", jd:"jd" };
+
+const tokens = s => String(s || "").toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter(Boolean);
+
+function mergeRecords() {
+  const by = {};
+  S.players.forEach(p => { by[p.id] = { id: p.id, name: p.name, uid: p.uid || "", email: p.email || "", onRoster: true }; });
+  S.scores.forEach(x => { if (!by[x.playerId]) by[x.playerId] = { id: x.playerId, name: x.name, uid: "", email: "", onRoster: false }; });
+  Object.values(by).forEach(r => {
+    r.weeks = [...new Set(S.scores.filter(x => x.playerId === r.id).map(x => x.weekId)
+      .concat(S.allPicks.filter(p => p.playerId === r.id).map(p => p.weekId)))].sort();
+  });
+  return Object.values(by).filter(r => r.weeks.length || r.onRoster);
+}
+
+// How confident is it that two records are one person? null means "not a pair".
+function sameness(a, b) {
+  const A = tokens(a.name), B = tokens(b.name);
+  if (!A.length || !B.length) return null;
+  const nick = t => NICKNAMES[t] || t;
+  if (A.join(" ") === B.join(" ")) return { level: "high", why: "same name" };
+  const [short, long] = A.length <= B.length ? [A, B] : [B, A];
+  if (short.length === 1 && long.length > 1) {
+    const h = short[0];
+    if (h === long[0]) return { level: "high", why: "first name vs full name" };
+    if (nick(h) === long[0] || nick(long[0]) === h) return { level: "high", why: "nickname vs full name" };
+    if (long[1].startsWith(h.slice(0, 4)) && h.length >= 4) return { level: "check", why: "nickname from surname" };
+    const initials = long[0].slice(0, Math.max(2, h.length - 1));
+    if (h.startsWith(long[0].slice(0, 3)) && h.slice(3, 4) === long[1][0]) return { level: "check", why: "first name + last initial" };
+    if (h.startsWith(long[0][0] + long[1]) || h === long[0][0] + long[1][0]) return { level: "check", why: "initials" };
+  }
+  if (A[0] === B[0] && A.length > 1 && B.length > 1 && A[1][0] === B[1][0])
+    return { level: "check", why: "same first name and last initial" };
+  return null;
+}
+
+let mergeList = [];     // [{keep, lose, why, level, conflict, on}]
+let mergeKey = null;
+
+function suggestMerges() {
+  const recs = mergeRecords();
+  // how many records start with each first name — "Dylan" alone is ambiguous
+  // when three different players are called Dylan
+  const firstCount = {};
+  recs.forEach(r => { const f = tokens(r.name)[0]; if (f) firstCount[f] = (firstCount[f] || 0) + 1; });
+  const out = [];
+  for (let i = 0; i < recs.length; i++) for (let j = i + 1; j < recs.length; j++) {
+    const a = recs[i], b = recs[j], m = sameness(a, b);
+    if (!m) continue;
+    const first = tokens(a.name)[0];
+    if (m.level === "high" && m.why === "first name vs full name" && firstCount[first] >= 3) {
+      m.level = "check";
+      m.why += ` — ${firstCount[first]} players are called ${a.name.split(" ")[0]}`;
+    }
+    const shared = a.weeks.filter(w => b.weeks.includes(w));
+    const last = r => r.weeks[r.weeks.length - 1] || "";
+    let keep = a, lose = b;
+    if (last(b) > last(a) || (last(b) === last(a) && (b.uid && !a.uid))) { keep = b; lose = a; }
+    // Two records that played the same week are two different people — unless
+    // one of them carried on into weeks the other never played, which is what a
+    // person who switched to a new record looks like. Dylan and Dylan F both
+    // stopped after Week 1, so they are two players, not one.
+    if (shared.length) {
+      const carriedOn = keep.weeks.some(w => !lose.weeks.includes(w));
+      if (m.level !== "high" || !carriedOn) continue;
+    }
+    out.push({ keep, lose, why: m.why, level: shared.length ? "conflict" : m.level,
+               conflict: shared, on: !shared.length && m.level === "high" });
+  }
+  // A record takes part in one pairing only: once folded it no longer exists to
+  // be a keeper, and a keeper cannot also be folded away elsewhere. Most
+  // confident pairings claim their records first.
+  const rank = p => p.level === "high" ? 0 : p.level === "conflict" ? 1 : 2;
+  const taken = new Set();
+  return out.sort((x, y) => rank(x) - rank(y)).filter(p => {
+    if (taken.has(p.lose.id) || taken.has(p.keep.id)) return false;
+    taken.add(p.lose.id); taken.add(p.keep.id);
+    return true;
+  });
+}
+
+function weekScore(id, wk) {
+  const x = S.scores.find(s => s.playerId === id && s.weekId === wk);
+  return x ? `${x.correct}/${x.total}` : "card";
+}
+
+function renderMerge() {
+  const el = $("#merge-list"); if (!el) return;
+  const key = S.players.length + ":" + S.scores.length + ":" + S.allPicks.length;
+  if (key !== mergeKey) { mergeKey = key; mergeList = suggestMerges(); }
+
+  el.innerHTML = mergeList.length ? `<div class="twrap"><table>
+    <thead><tr><th></th><th>Keep</th><th>Fold in</th><th>What happens</th></tr></thead>
+    <tbody>${mergeList.map((p, i) => {
+      const moves = p.lose.weeks.filter(w => !p.keep.weeks.includes(w));
+      const note = [
+        moves.length ? "moves " + moves.map(w => `${w.replace("w0","Wk ").replace("w","Wk ")} (${weekScore(p.lose.id, w)})`).join(", ") : "",
+        p.conflict.length ? `<b style="color:var(--loss)">both played ${p.conflict.map(w=>w.replace("w0","Wk ")).join(", ")}</b> — ${esc(p.keep.name)}&rsquo;s card is kept, ${esc(p.lose.name)}&rsquo;s dropped` : ""
+      ].filter(Boolean).join("; ") || "no weeks to move";
+      return `<tr>
+        <td><input type="checkbox" data-mi="${i}" ${p.on ? "checked" : ""} style="width:auto"></td>
+        <td><b>${esc(p.keep.name)}</b><div class="hint">${p.keep.weeks.map(w => weekScore(p.keep.id, w)).join(" · ")}</div></td>
+        <td>${esc(p.lose.name)}<div class="hint">${p.lose.weeks.map(w => weekScore(p.lose.id, w)).join(" · ")}</div></td>
+        <td style="white-space:normal;min-width:220px">${note}
+          <div class="hint">${esc(p.why)}${p.level === "check" ? " — worth a look" : ""}
+          · <button class="linkish" data-mswap="${i}" style="color:var(--muted)">swap</button></div></td>
+      </tr>`; }).join("")}</tbody></table></div>`
+    : '<div class="empty">No likely duplicates found.</div>';
+
+  const recs = mergeRecords().sort((a, b) => a.name.localeCompare(b.name));
+  const opts = recs.map(r => `<option value="${esc(r.id)}">${esc(r.name)} (${r.weeks.length} wk)</option>`).join("");
+  const f = $("#merge-from"), t = $("#merge-into");
+  if (f.options.length !== recs.length) { f.innerHTML = opts; t.innerHTML = opts; }
+}
+
+$("#merge-list").addEventListener("change", e => {
+  const i = e.target.dataset.mi; if (i === undefined) return;
+  mergeList[+i].on = e.target.checked;
+});
+$("#merge-list").addEventListener("click", e => {
+  const b = e.target.closest("[data-mswap]"); if (!b) return;
+  const p = mergeList[+b.dataset.mswap];
+  [p.keep, p.lose] = [p.lose, p.keep];
+  mergeKey = "held";                                   // keep the edit on re-render
+  renderMerge();
+});
+$("#merge-add").addEventListener("click", () => {
+  const recs = mergeRecords();
+  const lose = recs.find(r => r.id === $("#merge-from").value);
+  const keep = recs.find(r => r.id === $("#merge-into").value);
+  const st = $("#merge-status");
+  if (!lose || !keep || lose.id === keep.id) { st.className = "status err"; st.textContent = "Pick two different players."; return; }
+  mergeList = mergeList.filter(p => p.lose.id !== lose.id && p.keep.id !== lose.id);
+  const shared = lose.weeks.filter(w => keep.weeks.includes(w));
+  mergeList.push({ keep, lose, why: "added by hand", level: shared.length ? "conflict" : "high", conflict: shared, on: true });
+  mergeKey = "held"; renderMerge();
+  st.className = "status"; st.textContent = `${lose.name} will fold into ${keep.name}.`;
+});
+
+async function foldPlayer(keep, lose) {
+  const batch = writeBatch(db);
+  const keepWeeks = new Set(keep.weeks);
+  const picks  = S.allPicks.filter(p => p.playerId === lose.id);
+  const scores = S.scores.filter(x => x.playerId === lose.id);
+  const weeks  = [...new Set(picks.map(p => p.weekId).concat(scores.map(x => x.weekId)))];
+  let moved = 0, dropped = 0;
+  weeks.forEach(wk => {
+    const pk = picks.find(p => p.weekId === wk), sc = scores.find(x => x.weekId === wk);
+    if (keepWeeks.has(wk)) {                          // the keeper already has this week
+      if (pk) batch.delete(doc(db, "picks", pk.id));
+      if (sc) batch.delete(doc(db, "scores", sc.id));
+      dropped++;
+      return;
+    }
+    if (pk) {
+      const { id, ...body } = pk;
+      // uid must be the keeper's, or the week vanishes from their My Results
+      batch.set(doc(db, "picks", `${wk}__${keep.id}`),
+        { ...body, playerId: keep.id, uid: keep.uid || pk.uid, name: keep.name });
+      batch.delete(doc(db, "picks", pk.id));
+    }
+    if (sc) {
+      batch.set(doc(db, "scores", `${wk}__${keep.id}`),
+        { weekId: wk, playerId: keep.id, name: keep.name, correct: sc.correct, total: sc.total });
+      batch.delete(doc(db, "scores", sc.id));
+    }
+    moved++;
+  });
+  if (!keep.email && lose.email && S.players.some(p => p.id === keep.id))
+    batch.update(doc(db, "players", keep.id), { email: lose.email });
+  if (S.players.some(p => p.id === lose.id)) batch.delete(doc(db, "players", lose.id));
+  await batch.commit();
+  return { moved, dropped };
+}
+
+$("#merge-run").addEventListener("click", async () => {
+  const st = $("#merge-status");
+  const chosen = mergeList.filter(p => p.on);
+  if (!chosen.length) { st.className = "status err"; st.textContent = "Tick at least one pair."; return; }
+  const lines = chosen.map(p => `• ${p.lose.name} → ${p.keep.name}` +
+    (p.conflict.length ? `  (drops ${p.lose.name}'s ${p.conflict.join(", ")} card)` : ""));
+  if (!confirm(`Merge ${chosen.length} pair${chosen.length === 1 ? "" : "s"}?\n\n${lines.join("\n")}\n\n` +
+      `Each older record's weeks move onto the kept one and the older record is removed. This cannot be undone.`)) return;
+  let done = 0, moved = 0, dropped = 0; const failed = [];
+  for (const p of chosen) {
+    st.className = "status"; st.textContent = `Merging ${p.lose.name} into ${p.keep.name}…`;
+    try { const r = await foldPlayer(p.keep, p.lose); done++; moved += r.moved; dropped += r.dropped; }
+    catch (e) { failed.push(`${p.lose.name}: ${friendlyError(e)}`); }
+  }
+  mergeKey = null;
+  st.className = failed.length ? "status err" : "status ok";
+  st.textContent = `Merged ${done} of ${chosen.length}: ${moved} week${moved === 1 ? "" : "s"} moved` +
+    (dropped ? `, ${dropped} duplicate card${dropped === 1 ? "" : "s"} dropped` : "") + "." +
+    (failed.length ? "  Failed — " + failed.join("; ") : "  Standings have updated.");
 });
 
 $("#adm-roster").addEventListener("change", async e => {
