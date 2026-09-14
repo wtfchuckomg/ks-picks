@@ -556,12 +556,13 @@ function crest(name) {
   // a file may have been named for the abbreviation the slate uses.
   const names = [t && t.name, name, ...((t && t.aliases) || [])].filter(Boolean);
   const seen = new Set(), tries = [];
-  names.forEach(n => {
-    const sl = logoSlug(n);
-    if (!sl || seen.has(sl)) return;
-    seen.add(sl);
-    tries.push("logos/" + sl + ".png");   // png only: crests need transparency
-  });
+  const add = path => { if (!seen.has(path)) { seen.add(path); tries.push(path); } };
+  // Logos are uploaded named the way the school is written — "Washburn Rural.png" —
+  // so that spelling is tried first and a fresh upload always wins. The older
+  // lowercase copies ("washburn-rural.png") are the fallback, and a web server
+  // treats the two as different files, which is why uploads looked ignored.
+  names.forEach(n => add("logos/" + encodeURIComponent(String(n).trim()) + ".png"));
+  names.forEach(n => { const sl = logoSlug(n); if (sl) add("logos/" + sl + ".png"); });
   // A file in logos/ wins over a link pasted into the record: the files are
   // ours and stay put, a hosted link is someone else's and can vanish.
   const explicit = t && /^https?:/i.test(t.logo || "") ? t.logo : "";
