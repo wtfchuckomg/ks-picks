@@ -275,133 +275,154 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
 </style>
 <style id="glass-layer">
 /* ==========================================================================================
-   Pick 'Ems: the Apple-style glass look from stats.kansasmediarankings.com, adapted to this
-   site's classes. Recipe and rules: ~/Desktop/fb stats/design/glass-look.css.
+   Pick 'Ems: the Apple-style glass look, adapted to this site's classes.
+   Recipe and rules: ~/Desktop/fb stats/design/glass-look.css. This version leans further
+   toward iOS glass: clearer panes, a bright specular rim, an inner edge glow and a diagonal
+   sheen, over a more colourful wallpaper so the glass has something to bend.
 
    This layer only changes the look. Pages, features, layout and density stay as they are.
    It sits after the site's own styles and never targets the header: the dark site bar and the
    white logo masthead (.sitebar, .board and everything inside them) are Pick 'Em's own and
    stay exactly as they were. The header's accent tokens (--accent, --nav-*, --brand-*) are left
    alone for the same reason. The glass uses its own blue (--g-blue), and only below the header.
-   Dropdowns (the four <select> boxes) are nearly solid white so they stay easy to read.
+   Dropdowns (the four <select> boxes) stay nearly solid white so they are easy to read.
    ========================================================================================== */
 :root{
-  --page:#EEF0F6; --ground:#FFFFFF; --surface:#F5F5F7; --surface-2:#E8E8ED;
-  --ink:#1D1D1F; --muted:#6E6E73; --line:#D2D2D7; --line-2:#E4E4EA;
-  --win-wash:rgba(30,134,54,.12); --loss-wash:rgba(215,48,30,.11);
-  --g-blue:#0071E3; --g-blue-hover:#0077ED; --g-tint-blue:rgba(0,113,227,.10); --g-fill:rgba(118,118,128,.14);
-  --g-red:#D70015; --g-hair:rgba(29,29,31,.08);
-  --g-tint:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34) 38%,rgba(255,255,255,.44));
-  --g-solid:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.92));
-  --g-frost:linear-gradient(180deg,rgba(255,255,255,.84),rgba(255,255,255,.72));
-  --g-rim:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.28) 38%,rgba(255,255,255,.18) 62%,rgba(255,255,255,.7));
-  --g-blur:blur(28px) saturate(2);
-  --g-depth:0 12px 40px rgba(30,40,90,.14),0 2px 6px rgba(30,40,90,.06);
-  --g-depth-sm:0 6px 22px rgba(30,40,90,.10),0 1px 3px rgba(30,40,90,.05);
+  --page:#E9EEFA; --ground:#FFFFFF; --surface:#F5F5F7; --surface-2:#E8E8ED;
+  --ink:#1D1D1F; --muted:#5C5C66; --line:#D2D2D7; --line-2:#E4E4EA;
+  --win-wash:rgba(52,199,89,.22); --loss-wash:rgba(255,59,48,.17);
+  --g-blue:#0071E3; --g-red:#D70015;
+  --g-fill:rgba(255,255,255,.38);
+  /* the pane: mostly clear, a little brighter at the top */
+  --g-tint:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.14) 46%,rgba(255,255,255,.24));
+  /* light catching the glass from the top left */
+  --g-sheen:linear-gradient(118deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.16) 17%,rgba(255,255,255,0) 36%,rgba(255,255,255,0) 74%,rgba(255,255,255,.16) 100%);
+  /* the rim: bright where the light hits, nearly gone on the far sides */
+  --g-rim:linear-gradient(145deg,#FFFFFF,rgba(255,255,255,.4) 28%,rgba(255,255,255,.08) 55%,rgba(255,255,255,.5) 84%,rgba(255,255,255,.95));
+  --g-blur:blur(18px) saturate(1.9) brightness(1.05);
+  /* specular top edge, soft lower edge, and the inner glow that makes the pane read as thick glass */
+  --g-edge:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.45),inset 0 0 0 1px rgba(255,255,255,.14),inset 0 0 26px rgba(255,255,255,.32);
+  --g-drop:0 14px 40px rgba(24,32,90,.16),0 2px 6px rgba(24,32,90,.07);
   --g-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
-/* the wallpaper: soft fields of color that stay put while the glass slides over them */
+/* the wallpaper: saturated fields of colour that stay put while the glass slides over them */
 body{background:var(--page)}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(42% 38% at 8% 6%,rgba(10,132,255,.55),transparent 70%),
-    radial-gradient(38% 34% at 92% 10%,rgba(255,159,10,.42),transparent 70%),
-    radial-gradient(44% 40% at 78% 62%,rgba(94,92,230,.45),transparent 72%),
-    radial-gradient(40% 36% at 14% 70%,rgba(255,55,95,.30),transparent 72%),
-    radial-gradient(46% 40% at 48% 104%,rgba(100,210,255,.45),transparent 72%),
-    linear-gradient(160deg,#EAF0FF,#F6EEF6 48%,#EEF3FA)}
+    radial-gradient(34% 30% at 10% 8%,rgba(0,122,255,.72),transparent 68%),
+    radial-gradient(30% 28% at 90% 12%,rgba(255,149,0,.60),transparent 68%),
+    radial-gradient(36% 32% at 80% 58%,rgba(88,86,214,.64),transparent 70%),
+    radial-gradient(32% 30% at 12% 62%,rgba(255,45,85,.46),transparent 70%),
+    radial-gradient(24% 22% at 54% 34%,rgba(52,199,89,.30),transparent 70%),
+    radial-gradient(38% 32% at 50% 102%,rgba(50,173,230,.62),transparent 70%),
+    linear-gradient(160deg,#E2EAFF,#F3E8F3 48%,#E6EFFA)}
 
 /* Apple's system type, below the header only */
 main,nav.tabs,.gate{font-family:var(--g-sans);letter-spacing:-.01em}
 main :focus-visible,nav.tabs :focus-visible,.gate :focus-visible{outline:2px solid var(--g-blue);outline-offset:2px}
 .card-hd h2,.prail .rail-hd,.myline b,.tab,.tally,th,.chip,.gate h1{font-family:var(--g-sans)}
 
-/* ---------- the tabs: a light frosted menu bar that stays pinned at the top ---------- */
-nav.tabs{border:0 solid transparent;border-bottom-width:1px;
-  background:var(--g-frost) padding-box,var(--g-rim) border-box;
+/* ---------- the glass pane, shared by every card below the header ---------- */
+.game,.prail,.twrap,#view-admin .card-bd,.empty{border:1px solid transparent;
+  background:var(--g-sheen) padding-box,var(--g-tint) padding-box,var(--g-rim) border-box;
   -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);
-  box-shadow:0 8px 24px rgba(30,40,90,.08)}
-.tab{color:var(--ink);font-weight:400;font-size:14px;text-transform:none;letter-spacing:-.01em;
-  border-bottom:0;padding:13px 14px;opacity:.85}
+  box-shadow:var(--g-edge),var(--g-drop)}
+.game{border-radius:22px}
+.game:focus-within{border-color:transparent;box-shadow:var(--g-edge),var(--g-drop),0 0 0 3px rgba(0,113,227,.25)}
+#view-admin .card-bd{border-radius:24px}
+.empty{border-radius:20px;color:var(--muted)}
+.prail{border-radius:24px;padding:14px}
+.twrap{border-radius:20px}
+.prail .twrap{background:none;box-shadow:none;border:0;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* ---------- the tabs: a clear glass bar, pinned, that the page scrolls under ---------- */
+nav.tabs{border:0 solid transparent;border-bottom-width:1px;
+  background:linear-gradient(180deg,rgba(255,255,255,.50),rgba(255,255,255,.32)) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:blur(24px) saturate(2);backdrop-filter:blur(24px) saturate(2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.55),0 8px 26px rgba(24,32,90,.10)}
+.tab{position:relative;isolation:isolate;color:var(--ink);font-weight:400;font-size:14px;text-transform:none;
+  letter-spacing:-.01em;border-bottom:0;padding:13px 14px;opacity:.85}
 .tab:hover{color:var(--ink);opacity:1}
 .tab[aria-current="page"]{color:var(--ink);font-weight:600;opacity:1}
+/* the current tab sits in its own little glass capsule */
+.tab[aria-current="page"]::before{content:"";position:absolute;inset:6px 2px;z-index:-1;border-radius:980px;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 0 1px rgba(255,255,255,.6),0 3px 10px rgba(24,32,90,.12)}
 
 /* ---------- section headings: Apple type, no heavy rule ---------- */
 .card-hd{border-bottom:0;padding-bottom:0;margin-bottom:12px}
 .card-hd h2{font-size:21px;font-weight:700;text-transform:none;letter-spacing:-.022em}
 .hint{color:var(--muted)}
 
-/* ---------- glass cards: the games, the standings rail, admin panels ---------- */
-.game,.prail,#view-admin .card-bd,.empty{border:1px solid transparent;
-  background:var(--g-tint) padding-box,var(--g-rim) border-box;
-  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-depth)}
-.game{border-radius:20px}
-.game:focus-within{border-color:transparent;box-shadow:var(--g-depth),0 0 0 3px rgba(0,113,227,.22)}
-#view-admin .card-bd{border-radius:22px}
-.empty{border-radius:18px;color:var(--muted)}
-/* the standings rail is a table, so it sits on frosted white to stay easy to read */
-.prail{border-radius:22px;padding:14px;background:var(--g-frost) padding-box,var(--g-rim) border-box}
-.prail .rail-hd{font-size:15px;font-weight:600;text-transform:none;letter-spacing:-.01em;border-bottom:1px solid var(--g-hair)}
-.myline{border-bottom-color:var(--g-hair)}
-.myline b{font-weight:600}
-
-/* inside a game */
-.ghd{background:rgba(255,255,255,.42);border-bottom:1px solid rgba(255,255,255,.65)}
+/* ---------- inside a game ---------- */
+.ghd{background:rgba(255,255,255,.26);border-bottom:1px solid rgba(255,255,255,.6)}
 .gmatch{color:var(--ink)}
 .gstatus{color:var(--g-red);font-weight:600;letter-spacing:.02em}
-.prow + .prow{border-top-color:var(--g-hair)}
-.prow:hover:not(:disabled){background:rgba(255,255,255,.45)}
+.prow + .prow{border-top:1px solid rgba(255,255,255,.55)}
+.prow:hover:not(:disabled){background:rgba(255,255,255,.3)}
 .tag{color:var(--muted);font-weight:600}
-.chip{border-radius:14px;background:var(--g-fill);font-weight:700}
-.ck{border:1.5px solid rgba(29,29,31,.24);border-radius:7px;background:rgba(255,255,255,.7)}
-/* a pick with no result yet: Apple blue tick, no row colour */
+.chip{border-radius:16px;background:var(--g-fill);box-shadow:inset 0 1px 0 rgba(255,255,255,.8);font-weight:700}
+.chip.logo{box-shadow:none}
+/* the tick box: a small glass well */
+.ck{border:0;border-radius:8px;background:rgba(255,255,255,.5);
+  box-shadow:inset 0 1px 2px rgba(24,32,90,.18),inset 0 0 0 1px rgba(29,29,31,.14),0 1px 0 rgba(255,255,255,.9)}
+/* a pick with no result yet: a glossy blue tick, no row colour */
 .prow.on .chip{background:var(--g-blue);color:#FFFFFF}
-.prow.on .ck{background:var(--g-blue);border-color:var(--g-blue)}
-/* verdicts keep their meaning: green came in, red missed */
+.prow.on .ck{background:linear-gradient(180deg,#3D9BFF,#0071E3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 2px 6px rgba(0,113,227,.4)}
+/* verdicts keep their meaning: the whole bar goes green when the pick came in, red when it missed */
 .prow.on.won{background:var(--win-wash)}
 .prow.on.won .chip,.prow.on.won .ck{background:var(--win);border-color:var(--win)}
 .prow.on.miss{background:var(--loss-wash)}
 .prow.on.miss .chip,.prow.on.miss .ck{background:var(--loss);border-color:var(--loss)}
+.prow.on.won .ck,.prow.on.miss .ck{box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
 
-/* ---------- the submit bar: a frosted shelf pinned to the bottom ---------- */
-.savebar{color:var(--ink);border:1px solid transparent;border-radius:18px;
-  background:var(--g-frost) padding-box,var(--g-rim) border-box;
-  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:0 -6px 26px rgba(30,40,90,.12)}
+/* ---------- the standings rail ---------- */
+.prail .rail-hd{font-size:15px;font-weight:600;text-transform:none;letter-spacing:-.01em;border-bottom:1px solid rgba(255,255,255,.6)}
+.myline{border-bottom-color:rgba(255,255,255,.55)}
+.myline b{font-weight:600}
+
+/* ---------- the submit bar: a floating glass shelf at the bottom ---------- */
+.savebar{color:var(--ink);border:1px solid transparent;border-radius:22px;bottom:8px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.56),rgba(255,255,255,.36)) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:blur(24px) saturate(2);backdrop-filter:blur(24px) saturate(2);
+  box-shadow:var(--g-edge),0 12px 34px rgba(24,32,90,.2)}
 .tally{font-weight:700;text-transform:none;letter-spacing:-.02em}
 .tally small{color:var(--muted);font-weight:500}
 .status{color:var(--muted)}
 .status.ok{color:#1E8636}
 .status.err{color:#C8281C}
 
-/* ---------- buttons: pills. The main action in each area is solid blue; the rest are glass ---------- */
+/* ---------- buttons: the main action is glossy blue glass; the rest are clear glass ---------- */
 main .btn,main .btn.lamp,.gate .btn{border:0;border-radius:980px;padding:8px 16px;font-family:var(--g-sans);
-  font-weight:500;font-size:13px;text-transform:none;letter-spacing:-.01em;
-  background:var(--g-blue);color:#FFFFFF;box-shadow:0 4px 14px rgba(0,113,227,.30)}
-main .btn:hover:not(:disabled),main .btn.lamp:hover:not(:disabled),.gate .btn:hover:not(:disabled){background:var(--g-blue-hover);filter:none}
-main .btn.ghost,main .btn.danger,#adm-save,.savebar .btn.ghost{
-  background:rgba(255,255,255,.6);color:var(--g-blue);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.85),0 2px 8px rgba(30,40,90,.08)}
-main .btn.ghost:hover:not(:disabled),main .btn.danger:hover:not(:disabled),#adm-save:hover:not(:disabled){background:rgba(255,255,255,.88)}
+  font-weight:500;font-size:13px;text-transform:none;letter-spacing:-.01em;color:#FFFFFF;
+  background:linear-gradient(180deg,rgba(64,156,255,.96),rgba(0,113,227,.96));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,40,120,.22),0 6px 18px rgba(0,113,227,.34)}
+main .btn:hover:not(:disabled),main .btn.lamp:hover:not(:disabled),.gate .btn:hover:not(:disabled){
+  filter:none;background:linear-gradient(180deg,rgba(84,168,255,.98),rgba(0,119,237,.98))}
+main .btn.ghost,main .btn.danger,#adm-save,.savebar .btn.ghost{color:var(--g-blue);
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.3));
+  -webkit-backdrop-filter:blur(12px) saturate(1.8);backdrop-filter:blur(12px) saturate(1.8);
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 0 1px rgba(255,255,255,.55),0 4px 12px rgba(24,32,90,.1)}
+main .btn.ghost:hover:not(:disabled),main .btn.danger:hover:not(:disabled),#adm-save:hover:not(:disabled){
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55))}
 main .btn.danger{color:var(--g-red)}
 main .btn.sm{padding:5px 12px;font-size:12px}
 
-/* ---------- tables sit on frosted white so the numbers are easy to read ---------- */
-.twrap{border:1px solid transparent;border-radius:18px;
-  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.86)) padding-box,var(--g-rim) border-box;
-  box-shadow:var(--g-depth-sm)}
-.prail .twrap{background:none;box-shadow:none;border:0;border-radius:0}
-th{font-weight:600;color:var(--muted);letter-spacing:.02em;border-bottom-color:var(--line)}
-td{border-bottom-color:var(--g-hair)}
-tbody tr:nth-child(even) td{background:#FAFAFC}
-tbody tr.leader td{background:#EEF5FD}
+/* ---------- tables: clear glass, with rows just milky enough to read the numbers ---------- */
+th{font-weight:600;color:var(--muted);letter-spacing:.02em;background:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.7)}
+td{border-bottom:1px solid rgba(255,255,255,.5)}
+tbody td{background:rgba(255,255,255,.2)}
+tbody tr:nth-child(even) td{background:rgba(255,255,255,.42)}
+tbody tr.leader td{background:rgba(0,122,255,.13)}
 tr.leader .rank{color:var(--g-blue)}
 .you-chip{border-radius:980px;padding:1px 7px;background:var(--ink)}
 
 /* ---------- form fields and the four dropdowns: nearly solid, so they read over the glass ---------- */
 main input:not([type=checkbox]):not([type=color]),main select,.gate input{
   border:0;border-radius:12px;padding:8px 11px;background:rgba(255,255,255,.95);
-  box-shadow:inset 0 0 0 1px rgba(29,29,31,.14)}
+  box-shadow:inset 0 0 0 1px rgba(29,29,31,.14),inset 0 1px 2px rgba(24,32,90,.08)}
 main input:not([type=checkbox]):not([type=color]):focus,main select:focus,.gate input:focus{
   outline:0;background:#FFFFFF;box-shadow:inset 0 0 0 1px var(--g-blue),0 0 0 4px rgba(0,113,227,.22)}
 label.f{color:var(--muted);font-weight:600}
@@ -409,18 +430,19 @@ label.f{color:var(--muted);font-weight:600}
 /* ---------- small pieces ---------- */
 .pill{border-radius:980px;padding:2px 8px}
 .pill.locked{color:var(--g-red);border-color:var(--g-red)}
-.res-opt{border:0;border-radius:980px;background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(29,29,31,.12)}
-.res-opt[aria-pressed="true"]{box-shadow:none}
-.banner{border:1px solid transparent;border-left-width:1px;border-radius:16px;
-  background:linear-gradient(180deg,rgba(0,113,227,.12),rgba(0,113,227,.07)) padding-box,var(--g-rim) border-box;
-  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+.res-opt{border:0;border-radius:980px;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.4));
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 0 1px rgba(29,29,31,.1)}
+.res-opt[aria-pressed="true"]{box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.banner{border:1px solid transparent;border-radius:18px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(0,122,255,.18),rgba(0,122,255,.07)) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-edge),0 6px 20px rgba(24,32,90,.08)}
 
-/* ---------- the sign-in sheet: nearly solid, like a menu, since it holds a form ---------- */
-.gate{background:rgba(20,24,40,.32);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.gate-card{border:1px solid transparent;border-radius:26px;
-  background:var(--g-solid) padding-box,var(--g-rim) border-box;
+/* ---------- the sign-in sheet: nearly solid glass, since it holds a form ---------- */
+.gate{background:rgba(20,24,40,.28);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4)}
+.gate-card{border:1px solid transparent;border-radius:28px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.84)) padding-box,var(--g-rim) border-box;
   -webkit-backdrop-filter:blur(40px) saturate(1.8);backdrop-filter:blur(40px) saturate(1.8);
-  box-shadow:0 18px 50px rgba(30,40,90,.22),0 2px 8px rgba(30,40,90,.08)}
+  box-shadow:var(--g-edge),0 22px 60px rgba(24,32,90,.26),0 2px 8px rgba(24,32,90,.08)}
 .gate-close:hover{color:#FFFFFF;opacity:.85}
 .sep::before,.sep::after{background:var(--line)}
 </style>
