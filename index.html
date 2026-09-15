@@ -273,6 +273,157 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;bor
   .adm-game .at2{display:none}
 }
 </style>
+<style id="glass-layer">
+/* ==========================================================================================
+   Pick 'Ems: the Apple-style glass look from stats.kansasmediarankings.com, adapted to this
+   site's classes. Recipe and rules: ~/Desktop/fb stats/design/glass-look.css.
+
+   This layer only changes the look. Pages, features, layout and density stay as they are.
+   It sits after the site's own styles and never targets the header: the dark site bar and the
+   white logo masthead (.sitebar, .board and everything inside them) are Pick 'Em's own and
+   stay exactly as they were. The header's accent tokens (--accent, --nav-*, --brand-*) are left
+   alone for the same reason. The glass uses its own blue (--g-blue), and only below the header.
+   Dropdowns (the four <select> boxes) are nearly solid white so they stay easy to read.
+   ========================================================================================== */
+:root{
+  --page:#EEF0F6; --ground:#FFFFFF; --surface:#F5F5F7; --surface-2:#E8E8ED;
+  --ink:#1D1D1F; --muted:#6E6E73; --line:#D2D2D7; --line-2:#E4E4EA;
+  --win-wash:rgba(30,134,54,.12); --loss-wash:rgba(215,48,30,.11);
+  --g-blue:#0071E3; --g-blue-hover:#0077ED; --g-tint-blue:rgba(0,113,227,.10); --g-fill:rgba(118,118,128,.14);
+  --g-red:#D70015; --g-hair:rgba(29,29,31,.08);
+  --g-tint:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34) 38%,rgba(255,255,255,.44));
+  --g-solid:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.92));
+  --g-frost:linear-gradient(180deg,rgba(255,255,255,.84),rgba(255,255,255,.72));
+  --g-rim:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.28) 38%,rgba(255,255,255,.18) 62%,rgba(255,255,255,.7));
+  --g-blur:blur(28px) saturate(2);
+  --g-depth:0 12px 40px rgba(30,40,90,.14),0 2px 6px rgba(30,40,90,.06);
+  --g-depth-sm:0 6px 22px rgba(30,40,90,.10),0 1px 3px rgba(30,40,90,.05);
+  --g-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+/* the wallpaper: soft fields of color that stay put while the glass slides over them */
+body{background:var(--page)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(42% 38% at 8% 6%,rgba(10,132,255,.55),transparent 70%),
+    radial-gradient(38% 34% at 92% 10%,rgba(255,159,10,.42),transparent 70%),
+    radial-gradient(44% 40% at 78% 62%,rgba(94,92,230,.45),transparent 72%),
+    radial-gradient(40% 36% at 14% 70%,rgba(255,55,95,.30),transparent 72%),
+    radial-gradient(46% 40% at 48% 104%,rgba(100,210,255,.45),transparent 72%),
+    linear-gradient(160deg,#EAF0FF,#F6EEF6 48%,#EEF3FA)}
+
+/* Apple's system type, below the header only */
+main,nav.tabs,.gate{font-family:var(--g-sans);letter-spacing:-.01em}
+main :focus-visible,nav.tabs :focus-visible,.gate :focus-visible{outline:2px solid var(--g-blue);outline-offset:2px}
+.card-hd h2,.prail .rail-hd,.myline b,.tab,.tally,th,.chip,.gate h1{font-family:var(--g-sans)}
+
+/* ---------- the tabs: a light frosted menu bar that stays pinned at the top ---------- */
+nav.tabs{border:0 solid transparent;border-bottom-width:1px;
+  background:var(--g-frost) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);
+  box-shadow:0 8px 24px rgba(30,40,90,.08)}
+.tab{color:var(--ink);font-weight:400;font-size:14px;text-transform:none;letter-spacing:-.01em;
+  border-bottom:0;padding:13px 14px;opacity:.85}
+.tab:hover{color:var(--ink);opacity:1}
+.tab[aria-current="page"]{color:var(--ink);font-weight:600;opacity:1}
+
+/* ---------- section headings: Apple type, no heavy rule ---------- */
+.card-hd{border-bottom:0;padding-bottom:0;margin-bottom:12px}
+.card-hd h2{font-size:21px;font-weight:700;text-transform:none;letter-spacing:-.022em}
+.hint{color:var(--muted)}
+
+/* ---------- glass cards: the games, the standings rail, admin panels ---------- */
+.game,.prail,#view-admin .card-bd,.empty{border:1px solid transparent;
+  background:var(--g-tint) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-depth)}
+.game{border-radius:20px}
+.game:focus-within{border-color:transparent;box-shadow:var(--g-depth),0 0 0 3px rgba(0,113,227,.22)}
+#view-admin .card-bd{border-radius:22px}
+.empty{border-radius:18px;color:var(--muted)}
+/* the standings rail is a table, so it sits on frosted white to stay easy to read */
+.prail{border-radius:22px;padding:14px;background:var(--g-frost) padding-box,var(--g-rim) border-box}
+.prail .rail-hd{font-size:15px;font-weight:600;text-transform:none;letter-spacing:-.01em;border-bottom:1px solid var(--g-hair)}
+.myline{border-bottom-color:var(--g-hair)}
+.myline b{font-weight:600}
+
+/* inside a game */
+.ghd{background:rgba(255,255,255,.42);border-bottom:1px solid rgba(255,255,255,.65)}
+.gmatch{color:var(--ink)}
+.gstatus{color:var(--g-red);font-weight:600;letter-spacing:.02em}
+.prow + .prow{border-top-color:var(--g-hair)}
+.prow:hover:not(:disabled){background:rgba(255,255,255,.45)}
+.tag{color:var(--muted);font-weight:600}
+.chip{border-radius:14px;background:var(--g-fill);font-weight:700}
+.ck{border:1.5px solid rgba(29,29,31,.24);border-radius:7px;background:rgba(255,255,255,.7)}
+/* a pick with no result yet: Apple blue tick, no row colour */
+.prow.on .chip{background:var(--g-blue);color:#FFFFFF}
+.prow.on .ck{background:var(--g-blue);border-color:var(--g-blue)}
+/* verdicts keep their meaning: green came in, red missed */
+.prow.on.won{background:var(--win-wash)}
+.prow.on.won .chip,.prow.on.won .ck{background:var(--win);border-color:var(--win)}
+.prow.on.miss{background:var(--loss-wash)}
+.prow.on.miss .chip,.prow.on.miss .ck{background:var(--loss);border-color:var(--loss)}
+
+/* ---------- the submit bar: a frosted shelf pinned to the bottom ---------- */
+.savebar{color:var(--ink);border:1px solid transparent;border-radius:18px;
+  background:var(--g-frost) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:0 -6px 26px rgba(30,40,90,.12)}
+.tally{font-weight:700;text-transform:none;letter-spacing:-.02em}
+.tally small{color:var(--muted);font-weight:500}
+.status{color:var(--muted)}
+.status.ok{color:#1E8636}
+.status.err{color:#C8281C}
+
+/* ---------- buttons: pills. The main action in each area is solid blue; the rest are glass ---------- */
+main .btn,main .btn.lamp,.gate .btn{border:0;border-radius:980px;padding:8px 16px;font-family:var(--g-sans);
+  font-weight:500;font-size:13px;text-transform:none;letter-spacing:-.01em;
+  background:var(--g-blue);color:#FFFFFF;box-shadow:0 4px 14px rgba(0,113,227,.30)}
+main .btn:hover:not(:disabled),main .btn.lamp:hover:not(:disabled),.gate .btn:hover:not(:disabled){background:var(--g-blue-hover);filter:none}
+main .btn.ghost,main .btn.danger,#adm-save,.savebar .btn.ghost{
+  background:rgba(255,255,255,.6);color:var(--g-blue);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.85),0 2px 8px rgba(30,40,90,.08)}
+main .btn.ghost:hover:not(:disabled),main .btn.danger:hover:not(:disabled),#adm-save:hover:not(:disabled){background:rgba(255,255,255,.88)}
+main .btn.danger{color:var(--g-red)}
+main .btn.sm{padding:5px 12px;font-size:12px}
+
+/* ---------- tables sit on frosted white so the numbers are easy to read ---------- */
+.twrap{border:1px solid transparent;border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.86)) padding-box,var(--g-rim) border-box;
+  box-shadow:var(--g-depth-sm)}
+.prail .twrap{background:none;box-shadow:none;border:0;border-radius:0}
+th{font-weight:600;color:var(--muted);letter-spacing:.02em;border-bottom-color:var(--line)}
+td{border-bottom-color:var(--g-hair)}
+tbody tr:nth-child(even) td{background:#FAFAFC}
+tbody tr.leader td{background:#EEF5FD}
+tr.leader .rank{color:var(--g-blue)}
+.you-chip{border-radius:980px;padding:1px 7px;background:var(--ink)}
+
+/* ---------- form fields and the four dropdowns: nearly solid, so they read over the glass ---------- */
+main input:not([type=checkbox]):not([type=color]),main select,.gate input{
+  border:0;border-radius:12px;padding:8px 11px;background:rgba(255,255,255,.95);
+  box-shadow:inset 0 0 0 1px rgba(29,29,31,.14)}
+main input:not([type=checkbox]):not([type=color]):focus,main select:focus,.gate input:focus{
+  outline:0;background:#FFFFFF;box-shadow:inset 0 0 0 1px var(--g-blue),0 0 0 4px rgba(0,113,227,.22)}
+label.f{color:var(--muted);font-weight:600}
+
+/* ---------- small pieces ---------- */
+.pill{border-radius:980px;padding:2px 8px}
+.pill.locked{color:var(--g-red);border-color:var(--g-red)}
+.res-opt{border:0;border-radius:980px;background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(29,29,31,.12)}
+.res-opt[aria-pressed="true"]{box-shadow:none}
+.banner{border:1px solid transparent;border-left-width:1px;border-radius:16px;
+  background:linear-gradient(180deg,rgba(0,113,227,.12),rgba(0,113,227,.07)) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+
+/* ---------- the sign-in sheet: nearly solid, like a menu, since it holds a form ---------- */
+.gate{background:rgba(20,24,40,.32);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.gate-card{border:1px solid transparent;border-radius:26px;
+  background:var(--g-solid) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:blur(40px) saturate(1.8);backdrop-filter:blur(40px) saturate(1.8);
+  box-shadow:0 18px 50px rgba(30,40,90,.22),0 2px 8px rgba(30,40,90,.08)}
+.gate-close:hover{color:#FFFFFF;opacity:.85}
+.sep::before,.sep::after{background:var(--line)}
+</style>
 </head>
 <body>
 
