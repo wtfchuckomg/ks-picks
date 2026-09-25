@@ -150,6 +150,8 @@ main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
 .chip.logo img{width:65px;height:65px;object-fit:contain;display:block}
 .prow.on .chip.logo{background:none}
 .team{flex:1 1 auto;font-weight:500;font-size:16.5px;line-height:1.25}
+.pct{margin-left:8px;font-size:12.5px;font-weight:600;color:var(--muted);
+  font-variant-numeric:tabular-nums;vertical-align:1px}
 .tag{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:.03em}
 .ck{flex:0 0 22px;width:22px;height:22px;border:2px solid var(--line);display:grid;place-items:center;border-radius:2px}
 .ck::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--accent-ink);
@@ -205,6 +207,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .rank{color:var(--muted);width:26px;font-weight:700;font-variant-numeric:tabular-nums}
 tbody tr.leader td{background:var(--accent-wash)}
 tr.leader .rank{color:var(--accent)}
+th.con{font-size:10px;font-weight:600;line-height:1.25;padding-bottom:2px;
+  border-bottom:0;color:var(--muted);text-transform:none;letter-spacing:0}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
 
@@ -1057,6 +1061,18 @@ function renderPicks() {
           : `<div class="banner"><b>${esc(w.label || "This week")} is final.</b> Winners are marked in green.</div>`)
       : `<div class="banner"><b>Picks are locked.</b> Results go up once the games finish.</div>`;
 
+  // How the room is split, shown to the commissioner only. Everyone else's
+  // card stays private: this is a count, never a name.
+  const cards = S.isAdmin ? S.allPicks.filter(p => p.weekId === w.id) : [];
+  const share = (gid, which) => {
+    if (!cards.length) return "";
+    let a = 0, h = 0;
+    cards.forEach(p => { const v = p.picks?.[gid]; if (v === "away") a++; else if (v === "home") h++; });
+    const n = a + h;
+    if (!n) return "";
+    return `<span class="pct">${Math.round((which === "away" ? a : h) / n * 100)}%</span>`;
+  };
+
   box.innerHTML = games.map((g, i) => {
     const mine = draft[g.id], res = hasResults ? results[g.id] : null;
     const row = (which, team) => {
@@ -1066,7 +1082,7 @@ function renderPicks() {
       return `<button class="${cls}" data-g="${esc(g.id)}" data-s="${which}"
         aria-pressed="${on}" ${weekLocked ? "disabled" : ""}>
         ${crest(team)}
-        <span class="team">${esc(team)}</span>
+        <span class="team">${esc(team)}${share(g.id, which)}</span>
         <span class="tag">${which}</span>
         <span class="ck"></span></button>`;
     };
@@ -1350,8 +1366,22 @@ function renderAdmin() {
   const wk = stored;
   const wp = S.allPicks.filter(p => p.weekId === S.admWeekId)
                        .sort((a, b) => a.name.localeCompare(b.name));
+  // What the room is on: the side most of this week's cards took, per game.
+  // The share is out of the cards that picked that game, so a blank doesn't
+  // count against either team.
+  const consensus = games.map(g => {
+    let a = 0, h = 0;
+    wp.forEach(p => { const v = p.picks?.[g.id]; if (v === "away") a++; else if (v === "home") h++; });
+    const n = a + h;
+    if (!n) return null;
+    const away = a >= h;
+    return { name: (away ? g.away : g.home).slice(0, 4), pct: Math.round((away ? a : h) / n * 100), tied: a === h };
+  });
   $("#adm-grid").innerHTML = (wk && games.length && wp.length) ? `<table>
-    <thead><tr><th>Player</th>${games.map((_, i) => `<th class="num">${i + 1}</th>`).join("")}<th class="num">Right</th></tr></thead>
+    <thead>
+      <tr><th class="con"></th>${consensus.map(c => `<th class="con num">${
+        c ? `${c.tied ? "Even" : esc(c.name)}<br>${c.pct}%` : "&middot;"}</th>`).join("")}<th class="con num"></th></tr>
+      <tr><th>Player</th>${games.map((_, i) => `<th class="num">${i + 1}</th>`).join("")}<th class="num">Right</th></tr></thead>
     <tbody>${wp.map(p => {
       let c = 0;
       const cells = games.map(g => {
