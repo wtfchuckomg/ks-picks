@@ -479,7 +479,8 @@ label.f{color:var(--muted);font-weight:600}
     <nav class="sitebar-inner" aria-label="Kansas Media sites">
       <a class="sitelink" href="https://kansasmediarankings.com/">Media Rankings</a>
       <a class="sitelink active" href="./" aria-current="page">Pick &rsquo;Ems</a>
-      <a class="sitelink" href="https://stats.kansasmediarankings.com/">Media Stats</a>
+      <a class="sitelink" href="https://stats.kansasmediarankings.com/">FB Stats</a>
+      <a class="sitelink" href="https://stats.kansasmediarankings.com/basketball/">BB Stats</a>
       <a class="sitelink" href="https://kansasmediarankings.com/helmets.html">Helmets</a>
     </nav>
   </div>
@@ -532,7 +533,6 @@ label.f{color:var(--muted);font-weight:600}
       <div class="card">
         <div class="card-hd">
           <h2>Season standings</h2>
-          <span class="hint" id="season-note"></span>
         </div>
         <div class="card-bd twrap" id="season-table"></div>
       </div>
@@ -1229,11 +1229,6 @@ function renderRail() {
 function renderBoard() {
   const rows = seasonRows();
   const scored = S.weeks.filter(w => w.scored);
-  $("#season-note").textContent = scored.length
-    ? (SEASON_PCT_MODE === "all"
-        ? `Percentage is out of every game in all ${scored.length} scored week${scored.length > 1 ? "s" : ""} — a week you skip counts as zeros.`
-        : "Percentage counts only the weeks you submitted.")
-    : "";
 
   $("#season-table").innerHTML = rows.length ? `<table>
     <thead><tr><th class="rank">#</th><th>Player</th><th class="num">Weeks</th>
@@ -1658,7 +1653,7 @@ $("#mail-copy-msg").addEventListener("click", () =>
 let teamsKey = null;
 function renderTeams() {
   const el = $("#adm-teams"); if (!el) return;
-  const key = S.teams.map(t => t.id + ":" + (t.aliases || []).length).join(",");
+  const key = S.teams.map(t => t.id + ":" + t.name + ":" + (t.aliases || []).length).join(",");
   if (key === teamsKey) {                      // refresh previews without stealing focus
     S.teams.forEach(t => {
       const cell = el.querySelector(`[data-crest="${t.id}"]`);
@@ -1671,7 +1666,8 @@ function renderTeams() {
     <thead><tr><th></th><th>Team</th><th>Also known as</th><th>Logo image URL</th><th>Colour</th><th></th></tr></thead>
     <tbody>${S.teams.map(t => `<tr>
       <td data-crest="${esc(t.id)}">${crest(t.name)}</td>
-      <td>${esc(t.name)}</td>
+      <td><input data-tid="${esc(t.id)}" data-k="name" value="${esc(t.name)}" autocomplete="off"
+        aria-label="School name"></td>
       <td style="width:22%"><input data-tid="${esc(t.id)}" data-k="aliases" value="${esc((t.aliases || []).join(", "))}"
         placeholder="short name" autocomplete="off"></td>
       <td style="width:32%"><input data-tid="${esc(t.id)}" data-k="logo" value="${esc(t.logo || "")}"
@@ -1686,6 +1682,7 @@ function renderTeams() {
 $("#adm-teams").addEventListener("change", async e => {
   const el = e.target; if (!el.dataset.tid) return;
   let value = el.value.trim();
+  if (el.dataset.k === "name") { await renameTeam(el.dataset.tid, value); return; }
   if (el.dataset.k === "aliases") {
     value = [...new Set(value.split(",").map(v => v.trim()).filter(Boolean))];
     const clash = value.map(v => slug(v)).find(v =>
@@ -1699,6 +1696,37 @@ $("#adm-teams").addEventListener("change", async e => {
   try { await updateDoc(doc(db, "teams", el.dataset.tid), { [el.dataset.k]: value }); }
   catch (err) { alert(friendlyError(err)); }
 });
+
+// A school renamed here is renamed in every week's games too. Picks and
+// results are keyed by game, not by name, so nobody's card changes.
+async function renameTeam(tid, name) {
+  const t = S.teams.find(x => x.id === tid);
+  if (!t || !name || name === t.name) { renderTeams(); return; }
+  const s = slug(name);
+  if (S.teams.some(x => x.id !== tid && (x.id === s || (x.aliases || []).some(a => slug(a) === s)))) {
+    alert(`"${name}" already belongs to another team.`); teamsKey = null; renderTeams(); return;
+  }
+  const old = t.name;
+  const weeks = S.weeks.filter(w => (w.games || []).some(g => g.away?.trim() === old || g.home?.trim() === old));
+  if (!confirm(`Rename ${old} to ${name}?\n\nIt changes in ${weeks.length} week${weeks.length === 1 ? "" : "s"} of games too.`)) {
+    teamsKey = null; renderTeams(); return;
+  }
+  try {
+    const b = writeBatch(db);
+    const patch = { name };
+    // keep the old spelling findable, unless it's the same school id anyway
+    if (slug(old) !== tid && !(t.aliases || []).some(a => slug(a) === slug(old)))
+      patch.aliases = [...(t.aliases || []), old];
+    b.update(doc(db, "teams", tid), patch);
+    weeks.forEach(w => b.update(doc(db, "weeks", w.id), {
+      games: w.games.map(g => ({ ...g,
+        away: g.away?.trim() === old ? name : g.away,
+        home: g.home?.trim() === old ? name : g.home }))
+    }));
+    await b.commit();
+    admKey = null;
+  } catch (err) { alert(friendlyError(err)); teamsKey = null; renderTeams(); }
+}
 
 $("#adm-teams").addEventListener("click", async e => {
   const b = e.target.closest("[data-tdel]"); if (!b) return;
