@@ -257,6 +257,22 @@ table.cm td{vertical-align:middle}
 .cm-c{background-image:linear-gradient(90deg,rgba(0,113,227,.14) var(--p,0%),transparent var(--p,0%));font-variant-numeric:tabular-nums}
 tr.cm-out td{opacity:.5}
 tr.cm-out .cm-team span:last-child{text-decoration:line-through}
+.bk-views{margin-top:-6px}
+.bk-steps{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding:2px 2px 4px}
+.bk-step{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;border-radius:12px;
+  padding:8px 13px;font-size:13px;font-weight:600;line-height:1.1;color:var(--ink);
+  background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(29,29,31,.12)}
+.bk-step small{font-size:11px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.bk-step.done small{color:var(--win);font-weight:700}
+.bk-step.cur{background:var(--g-blue,#0071E3);color:#fff;box-shadow:0 4px 12px rgba(0,113,227,.28)}
+.bk-step.cur small{color:rgba(255,255,255,.85)}
+.bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin:0 0 16px}
+.bk-grid .bk-t{min-height:48px;padding:6px 12px;gap:10px;font-size:15px}
+.bk-grid .bk-t .chip{flex:0 0 34px;width:34px;height:34px}
+.bk-grid .bk-t .chip.logo img{width:34px;height:34px}
+.bk-grid .bk-sd{font-size:12px;min-width:22px}
+.bk-gnav{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
+.bk-done{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;font-size:14px}
 .bk-day{flex:0 0 auto;margin-left:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
@@ -555,7 +571,7 @@ label.f{color:var(--muted);font-weight:600}
 
   <nav class="tabs" aria-label="Sections"><div class="tabs-inner">
     <a class="tab" href="#bracket" data-view="bracket" aria-current="page">Bracket</a>
-    <a class="tab" href="#picks" data-view="picks">Make Picks</a>
+    <a class="tab" href="#picks" data-view="picks" hidden>Make Picks</a>
     <a class="tab" href="#standings" data-view="board">Standings</a>
     <a class="tab" href="#community" data-view="community">Community</a>
     <a class="tab" href="#my-results" data-view="mine">My Results</a>
@@ -612,6 +628,7 @@ label.f{color:var(--muted);font-weight:600}
     <section class="view" id="view-bracket" hidden>
       <div id="bk-banner"></div>
       <div class="bk-classes" id="bk-classes"></div>
+      <div class="bk-classes bk-views" id="bk-views"></div>
       <div id="bk-body"></div>
       <div class="savebar" id="bk-savebar" hidden>
         <span class="tally" id="bk-tally"></span>
@@ -2310,6 +2327,22 @@ function bkCount(picks, c) {
   return n;
 }
 
+// Each round's progress in your bracket: picked (or locked) of all its games.
+function bkRounds(c, picks) {
+  const R = bkResolver(c, g => picks[g]);
+  return BK_GAMES.map((n, r) => {
+    let done = 0, all = 0;
+    for (let i = 0; i < n; i++) {
+      const g = bkGid(c, r, i), [a, b, bye] = R.teams(r, i);
+      if (bye) continue;
+      all++;
+      if ((picks[g] && R.win(r, i) === picks[g]) || (a && b && bkGameLocked(g))) done++;
+    }
+    return { done, all };
+  });
+}
+const bkFirstOpen = (c, picks) => bkRounds(c, picks).findIndex(x => x.done < x.all);
+
 /* ---- Results: the stats site's finals, so nobody has to type 275 winners ----
    season.json holds every game the site has; kpscores.json fills the ones nobody
    tracked. Both are public files the stats site rebuilds through the night.
@@ -2479,6 +2512,33 @@ function bkClassHtml(c, picks, mode) {
       }).join("")}</div></div>`).join("")}</div></div>`;
 }
 
+// Picking one round at a time, like ESPN: a round's games as cards; finish them
+// and the next round comes up; finish State and your whole bracket shows.
+function bkGuideHtml(c, picks, mode) {
+  const ctx = { act: bkActual(c), mine: bkResolver(c, g => picks[g]) };
+  ctx.out = bkOut(ctx.act);
+  const rounds = bkRounds(c, picks), r = S.bkRound;
+  const steps = `<div class="bk-steps">${BK_ROUND.map((name, k) =>
+    `<button class="bk-step${k === r ? " cur" : ""}${rounds[k].done === rounds[k].all ? " done" : ""}" data-step="${k}">
+      ${name}<small>${rounds[k].done}/${rounds[k].all}</small></button>`).join("")}</div>`;
+  const games = ids => `<div class="bk-grid">${ids
+    .filter(i => !ctx.mine.teams(r, i)[2])
+    .map(i => bkGameHtml(c, r, i, picks, mode, ctx)).join("")}</div>`;
+  const all = Array.from({ length: BK_GAMES[r] }, (_, i) => i), half = BK_GAMES[r] / 2;
+  const body = r === 4 ? games([0])
+    : `<h3 class="bk-side">East</h3>${games(all.slice(0, half))}<h3 class="bk-side">West</h3>${games(all.slice(half))}`;
+  const nav = `<div class="bk-gnav">
+    ${r > 0 ? `<button class="btn ghost" data-step="${r - 1}">&lsaquo; ${BK_ROUND[r - 1]}</button>` : ""}
+    ${r < 4 ? `<button class="btn ghost" data-step="${r + 1}">${BK_ROUND[r + 1]} &rsaquo;</button>` : ""}
+    <button class="btn ghost" data-bkv="full">See my bracket</button></div>`;
+  return steps + body + nav;
+}
+function bkNextClass(c, picks) {
+  const k = BK_CLASSES.indexOf(c);
+  return [...BK_CLASSES.slice(k + 1), ...BK_CLASSES.slice(0, k)].find(x => bkFirstOpen(x, picks) >= 0) || null;
+}
+const bkTop = () => { const el = $("#bk-classes"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" }); };
+
 function renderBracket() {
   bkSubscribe();
   if (Date.now() - BKR.at > 10 * 60e3 && !BKR.loading) bkLoadResults().then(() => { if (S.view === "bracket") render(); });
@@ -2505,9 +2565,31 @@ function renderBracket() {
       n == null ? "" : `<small>${n}/${all}</small>`}</button>`;
   }).join("");
 
-  // Keep each half's sideways scroll where it was across redraws.
+  // Round by round while you're still picking; the full bracket once a class is done.
+  const pickable = !locked && !viewing && (mode === "mine" || (mode === "actual" && !S.me));
+  const seen = `${c}:${S.me ? (S.bkDraft ? "d" : "-") : "x"}:${pickable}`;
+  if (S.bkSeen !== seen) {
+    S.bkSeen = seen;
+    const k = bkFirstOpen(c, picks);
+    S.bkRound = k < 0 ? 4 : k;
+    S.bkView = pickable && k >= 0 ? "guided" : "full";
+  }
+  if (!pickable) S.bkView = "full";
+  const guided = S.bkView === "guided";
+  $("#bk-views").innerHTML = pickable ? `
+    <button class="bk-chip" data-bkv="guided" aria-pressed="${guided}">Pick by round</button>
+    <button class="bk-chip" data-bkv="full" aria-pressed="${!guided}">Full bracket</button>` : "";
+
+  let top = "";
+  if (!guided && pickable && S.me && bkFirstOpen(c, picks) < 0) {
+    const next = bkNextClass(c, picks);
+    top = `<div class="bk-done"><b>${esc(bkTab(c))} is filled in.</b>${next
+      ? ` <button class="btn" data-nextc="${next}">Next: ${esc(bkTab(next))} &rsaquo;</button>`
+      : " Every class is done."}</div>`;
+  }
+  // Keep the bracket's sideways scroll where it was across redraws.
   const keep = $$("#bk-body .bk-scroll").map(x => x.scrollLeft);
-  $("#bk-body").innerHTML = bkClassHtml(c, picks, mode);
+  $("#bk-body").innerHTML = top + (guided ? bkGuideHtml(c, picks, mode) : bkClassHtml(c, picks, mode));
   $$("#bk-body .bk-scroll").forEach((x, k) => { if (keep[k]) x.scrollLeft = keep[k]; });
 
   const bar = $("#bk-savebar");
@@ -2551,6 +2633,16 @@ function renderBracketBoard() {
 $("#view-bracket").addEventListener("click", e => {
   const chip = e.target.closest("[data-bkc]");
   if (chip) { S.bkClass = chip.dataset.bkc; render(); return; }
+  const step = e.target.closest("[data-step]");
+  if (step) { S.bkRound = +step.dataset.step; S.bkView = "guided"; render(); bkTop(); return; }
+  const v = e.target.closest("[data-bkv]");
+  if (v) {
+    S.bkView = v.dataset.bkv;
+    if (S.bkView === "guided") { const k = bkFirstOpen(S.bkClass, S.bkDraft || {}); S.bkRound = k < 0 ? 0 : k; }
+    render(); bkTop(); return;
+  }
+  const nc = e.target.closest("[data-nextc]");
+  if (nc) { S.bkClass = nc.dataset.nextc; S.bkSeen = null; render(); bkTop(); return; }
   if (e.target.closest("#bk-back")) { S.bkWho = null; render(); return; }
   if (e.target.closest("#bk-signin")) { openGate(); return; }
   const who = e.target.closest("[data-who]");
@@ -2564,13 +2656,29 @@ $("#view-bracket").addEventListener("click", e => {
   if (!S.me) { openGate(); return; }
   const g = t.dataset.bk, team = t.dataset.team;
   if (bkGameLocked(g) || !S.bkDraft) return;
+  const c = S.bkClass, r = +g.split("_")[1];
+  const wasDone = bkRounds(c, S.bkDraft)[r].done === bkRounds(c, S.bkDraft)[r].all;
   // Tapping your pick again takes it back out of the next round (and anything past it).
   if (S.bkDraft[g] === team) delete S.bkDraft[g]; else S.bkDraft[g] = team;
   bkSanitize(S.bkDraft);
   bkKeep();
   delete $("#bk-status").dataset.sticky;
+  // The tap that finishes a round brings up the next one; finishing State shows the bracket.
+  const R = bkRounds(c, S.bkDraft)[r];
+  const advance = S.bkView === "guided" && !wasDone && R.done === R.all;
+  if (advance) { if (r < 4) S.bkRound = r + 1; else S.bkView = "full"; }
   render();
+  if (advance) bkTop();
+  bkAutoSave();
 });
+
+// Saves itself a moment after each pick, so a bracket filled in round by round
+// is never lost to a closed tab. The button still saves on demand.
+let bkSaveTimer = null;
+function bkAutoSave() {
+  clearTimeout(bkSaveTimer);
+  bkSaveTimer = setTimeout(() => { if (S.me && !bkLocked() && bkDirty()) $("#bk-save").click(); }, 1500);
+}
 
 $("#bk-save").addEventListener("click", async () => {
   if (!S.me) { openGate(); return; }
