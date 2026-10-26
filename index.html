@@ -244,6 +244,17 @@ button.bk-t:hover{background:rgba(0,113,227,.07)}
 .bk-t.gone{opacity:.45}
 .bk-t.gone .bk-nm{text-decoration:line-through}
 .bk-t.bk-tbd{color:var(--muted)}
+.bk-pv{display:block;padding:3px 8px 4px;font-size:11px;font-weight:600;color:var(--g-blue,#0071E3);
+  text-align:right;text-decoration:none;border-top:1px solid rgba(29,29,31,.08)}
+.bk-pv:hover{text-decoration:underline}
+table.cm td{vertical-align:middle}
+.cm-team{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.cm-team .chip{flex:0 0 22px;width:22px;height:22px;font-size:8px;border-radius:5px;box-shadow:none}
+.cm-team .chip.logo img{width:22px;height:22px}
+.cm-c{background-image:linear-gradient(90deg,rgba(0,113,227,.14) var(--p,0%),transparent var(--p,0%));font-variant-numeric:tabular-nums}
+tr.cm-out td{opacity:.5}
+tr.cm-out .cm-team span:last-child{text-decoration:line-through}
+.bk-day{flex:0 0 auto;margin-left:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
 
@@ -540,9 +551,10 @@ label.f{color:var(--muted);font-weight:600}
   </header>
 
   <nav class="tabs" aria-label="Sections"><div class="tabs-inner">
-    <a class="tab" href="#picks" data-view="picks" aria-current="page">Make Picks</a>
+    <a class="tab" href="#bracket" data-view="bracket" aria-current="page">Bracket</a>
+    <a class="tab" href="#picks" data-view="picks">Make Picks</a>
     <a class="tab" href="#standings" data-view="board">Standings</a>
-    <a class="tab" href="#bracket" data-view="bracket">Bracket</a>
+    <a class="tab" href="#community" data-view="community">Community</a>
     <a class="tab" href="#my-results" data-view="mine">My Results</a>
     <a class="tab" href="#commissioner" data-view="admin" id="tab-admin" hidden>Commissioner</a>
   </div></nav>
@@ -594,6 +606,15 @@ label.f{color:var(--muted);font-weight:600}
       <div class="card" id="bk-board-card" hidden>
         <div class="card-hd"><h2>Bracket standings</h2></div>
         <div class="card-bd twrap" id="bk-board"></div>
+      </div>
+    </section>
+
+    <!-- ---- COMMUNITY ---- -->
+    <section class="view" id="view-community" hidden>
+      <div class="bk-classes" id="cm-classes"></div>
+      <div class="card">
+        <div class="card-hd"><h2 id="cm-title">Community picks</h2><span class="hint" id="cm-count"></span></div>
+        <div class="card-bd twrap" id="cm-table"></div>
       </div>
     </section>
 
@@ -785,6 +806,10 @@ const logoSlug = s => String(s).toLowerCase()
   .replace(/[^a-z0-9]+/g, "-")
   .replace(/^-|-$/g, "");
 
+// School logos come from the Kansas Media Stats library, which has nearly every
+// school (Chuck, 2026-10-26: "get rid of the helmets for now and use the team
+// logos"). Set this to false to go back to the helmets in our own logos/ folder.
+const USE_STATS_LOGOS = true;
 function crest(name) {
   const t = team(name), c = safeColor(t && t.color);
   // Try the school's own name, then whatever was typed, then any short name —
@@ -792,6 +817,15 @@ function crest(name) {
   const names = [t && t.name, name, ...((t && t.aliases) || [])].filter(Boolean);
   const seen = new Set(), tries = [];
   const add = path => { if (!seen.has(path)) { seen.add(path); tries.push(path); } };
+  if (USE_STATS_LOGOS) {
+    // The stats library's own file for the school (its aliases cover "SM North"
+    // and the like), then a guess at the name; a school with none gets initials.
+    names.forEach(n => { const f = BKR.files.get(bkCanon(n)); if (f) add(BK_STATS + "logos/" + encodeURIComponent(f)); });
+    names.forEach(n => add(BK_STATS + "logos/" + encodeURIComponent(String(n).trim()) + ".png"));
+    return `<span class="chip logo"><img src="${esc(tries[0])}" alt="" loading="lazy"
+      data-mono="${esc(mono(name))}"${c ? ` data-color="${esc(c)}"` : ""}
+      data-try="${esc(tries.slice(1).join("|"))}"></span>`;
+  }
   // Logos are uploaded named the way the school is written — "Washburn Rural.png" —
   // so that spelling is tried first and a fresh upload always wins. The older
   // lowercase copies ("washburn-rural.png") are the fallback, and a web server
@@ -2167,9 +2201,15 @@ const BK_FIELD = {
   "6M":[["Peabody-Burns","D1 #1","7-1"],null,["Palco","D2 #4","3-5"],["Elyria Christian","D1 #5","3-5"],["Otis-Bison","D2 #2","7-1"],["Altoona-Midway","D1 #7","0-7"],["Marais des Cygnes Valley","D1 #3","5-3"],["Chase","D2 #6","1-7"],["Tescott","D2 #1","8-0"],null,["Chetopa","D1 #4","4-3"],["Pawnee Heights","D2 #5","2-6"],["Centre","D1 #2","5-3"],["Western Plains","D2 #7","1-7"],["Logan","D2 #3","5-3"],["Southern Coffey County","D1 #6","1-7"],["Ingalls","D3 #1","8-0"],null,["Golden Plains","D4 #4","5-3"],["Bucklin","D3 #5","3-4"],["Wheatland-Grinnell","D4 #2","7-1"],["Moscow","D3 #7","1-7"],["Ashland","D3 #3","4-3"],["Winona-Triplains","D4 #6","1-6"],["Weskan","D4 #1","8-0"],null,["Satanta","D3 #4","4-4"],["Northern Valley","D4 #5","3-5"],["South Barber","D3 #2","7-2"],["Brewster","D4 #7","0-8"],["Cheylin","D4 #3","6-2"],["Deerfield","D3 #6","3-5"]]
 };
 const BK_ID = "po26";
-// Brackets lock at the first week-9 kickoff: Thursday, Oct 29, 7:00 PM in Kansas.
-// firestore.rules has the same moment (timestamp.date(2026, 10, 30)); change both together.
-const BK_LOCK = new Date("2026-10-30T00:00:00Z");
+// Each game locks at 5:00 PM on the day it's played (Chuck, 2026-10-26): week 9's
+// Thursday games at 5 PM Thursday the 29th, everything else at 5 PM Friday the 30th.
+// Thursday's games are the stats site's list (BK_THURSDAY in pb/35-bracket.js).
+// firestore.rules has the same two moments and the same list; change them together.
+const BK_LOCK_THU = new Date("2026-10-29T22:00:00Z");
+const BK_LOCK = new Date("2026-10-30T22:00:00Z");
+const BK_THU = new Set(["6A_0_3", "6A_0_6", "5A_0_4", "5A_0_13", "2A_0_0", "2A_0_6", "8M-I_0_1", "8M-I_0_10", "8M-I_0_13", "8M-II_0_0", "8M-II_0_6", "8M-II_0_7", "8M-II_0_10", "8M-II_0_11", "8M-II_0_14", "6M_0_2", "6M_0_3", "6M_0_6", "6M_0_7"]);
+const bkThuLocked = () => Date.now() >= BK_LOCK_THU.getTime();
+const bkGameLocked = g => Date.now() >= BK_LOCK.getTime() || (BK_THU.has(g) && bkThuLocked());
 const BK_CLASSES = ["6A", "5A", "4A", "3A", "2A", "1A", "8M-I", "8M-II", "6M"];
 const bkTab = c => c === "8M-I" ? "8-Man I" : c === "8M-II" ? "8-Man II" : c === "6M" ? "6-Man" : c;
 const BK_ROUND = ["Week 9", "Regional", "Sectional", "Sub-State", "State"];
@@ -2200,7 +2240,8 @@ function bkResolver(c, choose) {
     const [a, b, bye] = teams(r, i);
     let w = null;
     if (bye) w = a || b;
-    else if (a && b) { const v = choose(bkGid(c, r, i), a, b); if (v === a || v === b) w = v; }
+    // Your pick still stands if the other side of the game is open again.
+    else if (a || b) { const v = choose(bkGid(c, r, i), a, b); if (v && (v === a || v === b)) w = v; }
     memo.set(k, w);
     return w;
   };
@@ -2345,7 +2386,8 @@ function bkDirty() {
 
 /* ---- Drawing ---- */
 function bkMark(name) {
-  // Pick 'Ems' own crest first; a school we don't have one for borrows the stats site's logo.
+  if (USE_STATS_LOGOS) return crest(name);
+  // With our own helmets, a school we don't have one for borrows the stats site's logo.
   const html = crest(name), file = BKR.files.get(bkCanon(name));
   const stats = BK_STATS + "logos/" + encodeURIComponent(file || name + ".png");
   return html.replace(`|${PLACEHOLDER_CREST}"`, `|${esc(stats)}|${PLACEHOLDER_CREST}"`);
@@ -2359,8 +2401,9 @@ const bkSeedText = (c, n) => {
 function bkGameHtml(c, r, i, picks, mode, ctx) {
   const g = bkGid(c, r, i);
   const [a, b, bye] = (mode === "actual" ? ctx.act : ctx.mine).teams(r, i);
-  const can = (mode === "mine" || (mode === "actual" && !S.me)) && !bkLocked() && a && b && !bye;
-  const row = t => {
+  const can = (mode === "mine" || (mode === "actual" && !S.me)) && !bkGameLocked(g) && a && b && !bye;
+  const day = r === 0 && BK_THU.has(g) ? '<span class="bk-day">Thu</span>' : "";
+  const row = (t, tag = "") => {
     if (!t) return `<div class="bk-t bk-tbd"><span class="bk-nm">${r === 0 && bye ? "Bye" : "&nbsp;"}</span></div>`;
     const w = ctx.act.win(r, i), [xa, xb] = ctx.act.teams(r, i), decided = !!(w && xa && xb);
     let cls = "";
@@ -2368,12 +2411,23 @@ function bkGameHtml(c, r, i, picks, mode, ctx) {
     else if (picks[g] === t && ctx.mine.win(r, i) === t) {
       cls = decided ? (w === t ? "hit" : "miss") : ctx.out.has(t) ? "miss" : "on";
     } else if (ctx.out.has(t) && bkLocked()) cls = "gone";
-    const inner = `<span class="bk-sd">${esc(bkSeedText(c, t))}</span>${bkMark(t)}<span class="bk-nm">${esc(t)}</span>`;
+    const inner = `<span class="bk-sd">${esc(bkSeedText(c, t))}</span>${bkMark(t)}<span class="bk-nm">${esc(t)}</span>${tag}`;
     return can
       ? `<button class="bk-t ${cls}" data-bk="${esc(g)}" data-team="${esc(t)}" aria-pressed="${picks[g] === t}">${inner}</button>`
       : `<div class="bk-t ${cls}">${inner}</div>`;
   };
-  return `<div class="bk-g">${row(a)}${row(b)}</div>`;
+  // Both teams set (yours, as your bracket has them): a link to the stats site's
+  // matchup calculator for exactly those two. The better seed hosts until State.
+  const pv = a && b && !bye && !(ctx.act.win(r, i) && ctx.act.teams(r, i)[0] && ctx.act.teams(r, i)[1])
+    ? `<a class="bk-pv" href="${esc(bkPreviewUrl(c, r, a, b))}" target="_blank" rel="noopener">Preview</a>` : "";
+  return `<div class="bk-g">${row(a, day)}${row(b)}${pv}</div>`;
+}
+const bkRank = (c, n) => { const s = BK_INFO[c].get(n)?.seed;
+  return typeof s === "number" ? s : +String(s || "").split("#")[1] || 99; };
+function bkPreviewUrl(c, r, a, b) {
+  if (r === 4) return `${BK_STATS}?matchup&a=${encodeURIComponent(a)}&h=${encodeURIComponent(b)}&n=1`;
+  const [home, away] = bkRank(c, b) < bkRank(c, a) ? [b, a] : [a, b];
+  return `${BK_STATS}?matchup&a=${encodeURIComponent(away)}&h=${encodeURIComponent(home)}`;
 }
 function bkClassHtml(c, picks, mode) {
   const ctx = { act: bkActual(c), mine: bkResolver(c, g => picks[g]) };
@@ -2404,7 +2458,8 @@ function renderBracket() {
     ? `<div class="banner"><b>${esc(viewing.name)}&rsquo;s bracket.</b>
        <button class="linkish" id="bk-back" style="color:inherit;font-size:inherit">Back to ${S.me ? "mine" : "the results"}</button></div>`
     : !locked
-      ? `<div class="banner"><b>Brackets lock Thursday, Oct. 29 at 7:00 PM.</b>${S.me ? "" :
+      ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games lock Thu., Oct. 29 at 5:00 PM."}
+         Everything else locks Fri., Oct. 30 at 5:00 PM.</b>${S.me ? "" :
           ` <button class="linkish" id="bk-signin" style="color:inherit;font-size:inherit">Sign in</button> to fill one out.`}</div>`
       : "";
 
@@ -2470,9 +2525,10 @@ $("#view-bracket").addEventListener("click", e => {
   const t = e.target.closest("[data-bk]");
   if (!t) return;
   if (!S.me) { openGate(); return; }
-  if (bkLocked() || !S.bkDraft) return;
   const g = t.dataset.bk, team = t.dataset.team;
-  S.bkDraft[g] = team;
+  if (bkGameLocked(g) || !S.bkDraft) return;
+  // Tapping your pick again takes it back out of the next round (and anything past it).
+  if (S.bkDraft[g] === team) delete S.bkDraft[g]; else S.bkDraft[g] = team;
   bkSanitize(S.bkDraft);
   bkKeep();
   delete $("#bk-status").dataset.sticky;
@@ -2484,6 +2540,12 @@ $("#bk-save").addEventListener("click", async () => {
   const st = $("#bk-status"), btn = $("#bk-save");
   if (bkLocked()) { st.className = "status err"; st.textContent = "Too late — brackets are locked."; return; }
   btn.disabled = true; st.className = "status"; st.textContent = "Saving…";
+  // Past Thursday's lock, Thursday's games stay exactly as they were saved.
+  if (bkThuLocked()) {
+    const saved = bkMine()?.picks || {};
+    BK_THU.forEach(g => { if (saved[g]) S.bkDraft[g] = saved[g]; else delete S.bkDraft[g]; });
+    bkSanitize(S.bkDraft);
+  }
   try {
     await setDoc(doc(db, "brackets", `${BK_ID}__${S.me.id}`), {
       bracketId: BK_ID, playerId: S.me.id, uid: S.uid, name: S.me.name,
@@ -2495,6 +2557,52 @@ $("#bk-save").addEventListener("click", async () => {
     st.dataset.sticky = "1"; st.className = "status err"; st.textContent = friendlyError(err);
   } finally { btn.disabled = false; }
 });
+
+/* ---- Community: how the contest is picking ----
+   For each school, the share of brackets that have it winning each round.
+   Brackets are private until the Friday lock, so before then only the
+   commissioner sees this. */
+function renderCommunity() {
+  bkSubscribe();
+  if (!BK_CLASSES.includes(S.bkClass)) S.bkClass = "6A";
+  const c = S.bkClass, open = bkLocked() || S.isAdmin;
+  $("#cm-classes").innerHTML = BK_CLASSES.map(k =>
+    `<button class="bk-chip" data-cmc="${k}" aria-pressed="${k === c}">${bkTab(k)}</button>`).join("");
+  $("#cm-title").textContent = c.startsWith("8M") || c === "6M" ? bkTab(c) : "Class " + c;
+  const el = $("#cm-table");
+  if (!open) { $("#cm-count").textContent = ""; el.innerHTML = '<div class="empty">Opens when brackets lock, Friday at 5:00 PM.</div>'; return; }
+  const entries = S.brackets.filter(b => bkCount(b.picks || {}, c) > 0);
+  $("#cm-count").textContent = entries.length ? `${entries.length} bracket${entries.length === 1 ? "" : "s"}` : "";
+  if (!entries.length) { el.innerHTML = '<div class="empty">No brackets yet.</div>'; return; }
+  // reached[team][r] = brackets with the team winning its round-r game
+  const reached = new Map(BK_FIELD[c].filter(Boolean).map(([n]) => [n, [0, 0, 0, 0, 0]]));
+  entries.forEach(b => {
+    const R = bkResolver(c, g => (b.picks || {})[g]);
+    bkEach((r, i) => { const w = R.win(r, i); if (w && reached.has(w)) reached.get(w)[r]++; });
+  });
+  const act = bkActual(c), out = bkOut(act);
+  const byes = new Set(); BK_FIELD[c].forEach((x, k) => { if (!x) { const o = BK_FIELD[c][k ^ 1]; if (o) byes.add(o[0]); } });
+  const rows = [...reached.entries()].map(([n, v]) => ({ n, v }))
+    .sort((x, y) => { for (let r = 4; r >= 0; r--) if (y.v[r] !== x.v[r]) return y.v[r] - x.v[r]; return bkRank(c, x.n) - bkRank(c, y.n); });
+  const pct = (k, bye) => {
+    if (bye) return '<td class="num cm-c" style="color:var(--muted)">Bye</td>';
+    const p = Math.round(k / entries.length * 100);
+    return `<td class="num cm-c" style="--p:${p}%">${p ? p + "%" : '<span style="color:var(--muted)">—</span>'}</td>`;
+  };
+  el.innerHTML = `<table class="cm">
+    <thead><tr><th>School</th><th class="num">Wk 9</th><th class="num">Regional</th><th class="num">Sectional</th>
+      <th class="num">Sub-State</th><th class="num">Champion</th></tr></thead>
+    <tbody>${rows.map(x => `<tr class="${out.has(x.n) ? "cm-out" : ""}">
+      <td><span class="cm-team"><span class="bk-sd">${esc(bkSeedText(c, x.n))}</span>${bkMark(x.n)}<span>${esc(x.n)}</span></span></td>
+      ${x.v.map((k, r) => pct(k, r === 0 && byes.has(x.n))).join("")}</tr>`).join("")}</tbody></table>`;
+}
+$("#view-community").addEventListener("click", e => {
+  const chip = e.target.closest("[data-cmc]");
+  if (chip) { S.bkClass = chip.dataset.cmc; render(); }
+});
+
+// The stats site's logo list and finals, as soon as the page opens.
+bkLoadResults().then(() => render());
 
 /* ---- Commissioner: set or correct a result by hand ---- */
 function renderBracketAdmin() {
@@ -2529,10 +2637,11 @@ $("#bk-adm").addEventListener("click", async e => {
   catch (err) { alert(friendlyError(err)); }
 });
 
-let bkWasLocked = bkLocked();
+const bkLockState = () => `${bkThuLocked()}:${bkLocked()}`;
+let bkWasLocked = bkLockState();
 function bkTick() {
-  if (bkLocked() === bkWasLocked) return;
-  bkWasLocked = bkLocked();
+  if (bkLockState() === bkWasLocked) return;
+  bkWasLocked = bkLockState();
   bkSubscribe();
   if (S.view === "bracket") render();
 }
@@ -2549,13 +2658,13 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && S.showGate
 
 // Views are addressable, so the tabs can be ordinary links: right-click,
 // middle-click and cmd-click all behave, and back/forward work.
-const VIEW_BY_HASH = { "#picks": "picks", "#standings": "board", "#bracket": "bracket",
+const VIEW_BY_HASH = { "#picks": "picks", "#standings": "board", "#bracket": "bracket", "#community": "community",
                        "#my-results": "mine", "#commissioner": "admin" };
 const HASH_BY_VIEW = Object.fromEntries(
   Object.entries(VIEW_BY_HASH).map(([h, v]) => [v, h]));
 
 function applyHash() {
-  S.view = VIEW_BY_HASH[location.hash] || "picks";
+  S.view = VIEW_BY_HASH[location.hash] || "bracket";
   render();
 }
 window.addEventListener("hashchange", applyHash);
@@ -2586,12 +2695,13 @@ function render() {
   });
   const want = HASH_BY_VIEW[S.view];
   if (want && location.hash !== want) history.replaceState(null, "", want);
-  ["picks", "board", "bracket", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
+  ["picks", "board", "bracket", "community", "mine", "admin"].forEach(v => { $("#view-" + v).hidden = v !== S.view; });
 
   renderClock();
   if (S.view === "picks") { renderPicks(); renderRail(); }
   if (S.view === "board") renderBoard();
   if (S.view === "bracket") renderBracket();
+  if (S.view === "community") renderCommunity();
   if (S.view === "mine")  renderMine();
   if (S.view === "admin") renderAdmin();
 }

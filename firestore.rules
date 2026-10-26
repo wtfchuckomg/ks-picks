@@ -76,24 +76,45 @@ service cloud.firestore {
     }
 
     // ---- Playoff bracket challenge (2026) -----------------------------
-    // Your bracket is yours alone until the lock: Thursday, Oct. 29, 7:00 PM
-    // in Kansas (midnight UTC on the 30th; index.html has the same BK_LOCK).
-    // After it, every bracket is public, so the standings can be added up.
+    // Each game locks at 5:00 PM on its day: week 9's Thursday games at 5 PM
+    // Thursday the 29th, everything else at 5 PM Friday the 30th (22:00 UTC).
+    // index.html has the same moments (BK_LOCK_THU, BK_LOCK) and the same
+    // Thursday list (BK_THU). Your bracket is yours alone until the Friday lock;
+    // after it every bracket is public, so the standings can be added up.
     match /brackets/{bracketId} {
+      function bkThuLock() { return timestamp.date(2026, 10, 29) + duration.value(22, 'h'); }
+      function bkLock()    { return timestamp.date(2026, 10, 30) + duration.value(22, 'h'); }
+      function bkThuGames() {
+        return ['6A_0_3', '6A_0_6', '5A_0_4', '5A_0_13', '2A_0_0', '2A_0_6', '8M-I_0_1', '8M-I_0_10', '8M-I_0_13', '8M-II_0_0', '8M-II_0_6', '8M-II_0_7', '8M-II_0_10', '8M-II_0_11', '8M-II_0_14', '6M_0_2', '6M_0_3', '6M_0_6', '6M_0_7'];
+      }
+      function bkValid(id) {
+        return signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.bracketId == 'po26'
+          && id == 'po26__' + request.resource.data.playerId
+          && request.resource.data.picks is map
+          && request.resource.data.picks.size() <= 300
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 40
+          && request.time < bkLock();
+      }
+
       allow read: if isAdmin()
                   || (signedIn() && resource.data.uid == request.auth.uid)
-                  || request.time >= timestamp.date(2026, 10, 30);
+                  || request.time >= bkLock();
 
-      allow create, update: if isAdmin()
-        || (signedIn()
-            && request.time < timestamp.date(2026, 10, 30)
-            && request.resource.data.uid == request.auth.uid
-            && request.resource.data.bracketId == 'po26'
-            && bracketId == 'po26__' + request.resource.data.playerId
-            && request.resource.data.picks is map
-            && request.resource.data.picks.size() <= 300
-            && request.resource.data.name is string
-            && request.resource.data.name.size() <= 40);
+      // After Thursday's lock a new bracket can't include a Thursday game...
+      allow create: if isAdmin()
+        || (bkValid(bracketId)
+            && (request.time < bkThuLock()
+                || !request.resource.data.picks.keys().hasAny(bkThuGames())));
+
+      // ...and a saved one can't change one. Only the owner may update.
+      allow update: if isAdmin()
+        || (bkValid(bracketId)
+            && resource.data.uid == request.auth.uid
+            && (request.time < bkThuLock()
+                || !request.resource.data.picks.diff(resource.data.picks).affectedKeys().hasAny(bkThuGames())));
 
       allow delete: if isAdmin();
     }
