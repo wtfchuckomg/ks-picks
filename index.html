@@ -2630,9 +2630,8 @@ function renderBracket() {
   let top = "";
   if (!guided && pickable && S.me && bkFirstOpen(c, picks) < 0) {
     const next = bkNextClass(c, picks);
-    top += `<div class="bk-done"><b>${esc(bkTab(c))} is filled in.</b>${next
-      ? ` <button class="btn" data-nextc="${next}">Next: ${esc(bkTab(next))} &rsaquo;</button>`
-      : " Every class is done."}</div>`;
+    // Just the way on to the next class; nothing to say once every class is done.
+    if (next) top += `<div class="bk-done"><button class="btn" data-nextc="${next}">Next: ${esc(bkTab(next))} &rsaquo;</button></div>`;
   }
   // Keep the bracket's sideways scroll where it was across redraws.
   const keep = $$("#bk-body .bk-scroll").map(x => x.scrollLeft);
