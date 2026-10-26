@@ -1,0 +1,133 @@
+rules_version = '2';
+
+// Friday Night Picks — Firestore security rules.
+//
+// These are what actually enforce the two rules of the pool:
+//   1. Nobody can write a pick after the week's deadline. The check uses
+//      request.time (the server's clock), so changing the clock on a phone
+//      does nothing.
+//   2. Nobody can read anyone else's picks. Players read only their own
+//      card; the commissioner reads them all.
+//
+// Keep the email list below identical to ADMIN_EMAILS in index.html.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['chuck8303@gmail.com'];
+    }
+
+    function week(wid) {
+      return get(/databases/$(database)/documents/weeks/$(wid)).data;
+    }
+
+    // ---- Roster -------------------------------------------------------
+    // A record now carries the Google address it belongs to, so it is NOT
+    // public. You can read your own record; the commissioner reads them all.
+    // Names still appear publicly in the standings, which live in /scores.
+    match /players/{playerId} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.email == request.auth.token.email);
+
+      // Claiming: only the account whose address the commissioner assigned,
+      // and only to point the record at itself. Nothing else may change.
+      allow update: if isAdmin()
+                    || (signedIn()
+                        && request.auth.token.email_verified == true
+                        && resource.data.email == request.auth.token.email
+                        && request.resource.data.email == resource.data.email
+                        && request.resource.data.name == resource.data.name
+                        && request.resource.data.uid == request.auth.uid);
+
+      // A first-time player creates their own record, tied to their address.
+      allow create: if isAdmin()
+                    || (signedIn()
+                        && request.auth.token.email_verified == true
+                        && request.resource.data.uid == request.auth.uid
+                        && request.resource.data.email == request.auth.token.email
+                        && request.resource.data.id == playerId
+                        && request.resource.data.name is string
+                        && request.resource.data.name.size() <= 40);
+
+      allow delete: if isAdmin();
+    }
+
+    // ---- Team library (names, logos, colours) --------------------------
+    // Everyone reads it so logos render; only the commissioner edits it.
+    match /teams/{teamId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Weeks and games ---------------------------------------------
+    // The slate is public — anyone can look without signing in. Only the
+    // commissioner writes it, which also means only the commissioner can
+    // move a deadline.
+    match /weeks/{weekId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Playoff bracket challenge (2026) -----------------------------
+    // Your bracket is yours alone until the lock: Thursday, Oct. 29, 7:00 PM
+    // in Kansas (midnight UTC on the 30th; index.html has the same BK_LOCK).
+    // After it, every bracket is public, so the standings can be added up.
+    match /brackets/{bracketId} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.uid == request.auth.uid)
+                  || request.time >= timestamp.date(2026, 10, 30);
+
+      allow create, update: if isAdmin()
+        || (signedIn()
+            && request.time < timestamp.date(2026, 10, 30)
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.bracketId == 'po26'
+            && bracketId == 'po26__' + request.resource.data.playerId
+            && request.resource.data.picks is map
+            && request.resource.data.picks.size() <= 300
+            && request.resource.data.name is string
+            && request.resource.data.name.size() <= 40);
+
+      allow delete: if isAdmin();
+    }
+
+    // Results the commissioner sets by hand. Everyone reads them.
+    match /bracketMeta/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Picks (private) ----------------------------------------------
+    match /picks/{pickId} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create, update: if isAdmin()
+        || (signedIn()
+            && request.resource.data.uid == request.auth.uid
+            && pickId == request.resource.data.weekId + '__' + request.resource.data.playerId
+            && request.resource.data.picks is map
+            && request.resource.data.picks.size() <= 40
+            && week(request.resource.data.weekId).published == true
+            && request.time < week(request.resource.data.weekId).deadline);
+
+      allow delete: if isAdmin();
+    }
+
+    // ---- Scores (public totals only, never the picks themselves) -------
+    // Standings are public. These carry names and counts, never picks.
+    match /scores/{scoreId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Anything not matched above is denied by default.
+  }
+}
