@@ -119,6 +119,22 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Each bracket's picks with no name on them, for the People's Bracket,
+    // which everyone can see. Filed under the account's id; only that account
+    // (or the commissioner) writes it, and only until the Friday lock.
+    match /bracketVotes/{uid} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        || (signedIn()
+            && uid == request.auth.uid
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.bracketId == 'po26'
+            && request.resource.data.picks is map
+            && request.resource.data.picks.size() <= 300
+            && request.time < timestamp.date(2026, 10, 30) + duration.value(22, 'h'));
+      allow delete: if isAdmin();
+    }
+
     // Results the commissioner sets by hand. Everyone reads them.
     match /bracketMeta/{id} {
       allow read:  if true;

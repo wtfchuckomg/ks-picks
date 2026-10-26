@@ -932,7 +932,7 @@ const S = {
   view: "picks", showGate: false,
   draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
   admWeekId: null, admDraft: null,
-  brackets: [], bkMeta: {}, bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null,
+  brackets: [], bkVotes: [], bkMeta: {}, bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null,
   boardWeekId: null,
   ready: false
 };
@@ -1061,6 +1061,11 @@ function subscribe() {
     S.bkMeta = snap.exists() ? snap.data() : {};
     render();
   }, err => console.warn("bracket results:", err)));
+  // Each bracket's picks without a name, which anyone may read, for the People's Bracket.
+  unsubs.push(onSnapshot(collection(db, "bracketVotes"), snap => {
+    S.bkVotes = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(v => v.bracketId === BK_ID);
+    if (S.view === "community") render();
+  }, err => console.warn("bracket votes:", err)));
   bkScope = null;
   bkSubscribe();
 
@@ -2448,6 +2453,7 @@ function bkSubscribe() {
   bkUnsub = onSnapshot(ref, snap => {
     S.brackets = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => b.bracketId === BK_ID);
     S.bkLoaded = true;
+    setTimeout(bkSyncVotes, 2000);
     bkSyncDraft();
     render();
   }, err => { console.warn("brackets:", err); S.bkLoaded = true; render(); });
@@ -2470,6 +2476,26 @@ function bkDirty() {
   const keys = new Set([...Object.keys(saved), ...Object.keys(d)]);
   for (const k of keys) if (saved[k] !== d[k]) return true;
   return false;
+}
+
+/* ---- The People's Bracket's data ----
+   Brackets stay private until the lock, but everyone can see the People's
+   Bracket (Chuck, 2026-10-26: "unlocked for everyone to see"). So each saved
+   bracket also keeps a copy of just its picks, under the account's id and with
+   no name, in bracketVotes, which anyone may read. The commissioner's page fills
+   in copies for brackets saved before this existed. */
+function bkVote(uid, picks) {
+  if (!uid || bkLocked()) return;
+  setDoc(doc(db, "bracketVotes", uid), { bracketId: BK_ID, uid, picks: bkSanitize({ ...(picks || {}) }),
+    updatedAt: serverTimestamp() }).catch(err => console.warn("vote:", err));
+}
+function bkSyncVotes() {
+  if (!S.isAdmin || bkLocked()) return;
+  const key = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));
+  const have = new Map(S.bkVotes.map(v => [v.uid, key(v.picks || {})]));
+  S.brackets.forEach(b => {
+    if (b.uid && have.get(b.uid) !== key(bkSanitize({ ...(b.picks || {}) }))) bkVote(b.uid, b.picks);
+  });
 }
 
 /* ---- Drawing ---- */
@@ -2757,6 +2783,7 @@ $("#bk-save").addEventListener("click", async () => {
       picks: bkSanitize({ ...(S.bkDraft || {}) }), updatedAt: serverTimestamp()
     });
     try { localStorage.removeItem(bkStoreKey()); } catch {}
+    bkVote(S.uid, S.bkDraft);
     st.dataset.sticky = "1"; st.className = "status ok"; st.textContent = "Bracket saved.";
   } catch (err) {
     st.dataset.sticky = "1"; st.className = "status err"; st.textContent = friendlyError(err);
@@ -2766,8 +2793,7 @@ $("#bk-save").addEventListener("click", async () => {
 /* ---- Community: the People's Bracket, like ESPN's ----
    The bracket as the contest picked it: each game shows the two teams most
    brackets have meeting there, and the share of brackets taking each to win.
-   Brackets are private until the Friday lock, so before then only the
-   commissioner sees it. */
+   Everyone sees it, from the nameless copies in bracketVotes. */
 function bkPeopleHtml(c, entries) {
   const each = entries.map(b => bkResolver(c, g => (b.picks || {})[g]));
   const tally = (r, i, t) => each.reduce((n, R) => n + (R.win(r, i) === t ? 1 : 0), 0);
@@ -2800,13 +2826,12 @@ function bkPeopleHtml(c, entries) {
 function renderCommunity() {
   bkSubscribe();
   if (!BK_CLASSES.includes(S.bkClass)) S.bkClass = "6A";
-  const c = S.bkClass, open = bkLocked() || S.isAdmin;
+  const c = S.bkClass;
   $("#cm-classes").innerHTML = BK_CLASSES.map(k =>
     `<button class="bk-chip" data-cmc="${k}" aria-pressed="${k === c}">${bkTab(k)}</button>`).join("");
   $("#cm-title").textContent = "The People\u2019s Bracket \u00b7 " + (c.startsWith("8M") || c === "6M" ? bkTab(c) : "Class " + c);
   const el = $("#cm-table");
-  if (!open) { $("#cm-count").textContent = ""; el.innerHTML = '<div class="empty">Opens when brackets lock, Friday at 5:00 PM.</div>'; return; }
-  const entries = S.brackets.filter(b => bkCount(b.picks || {}, c) > 0);
+  const entries = S.bkVotes.filter(b => bkCount(b.picks || {}, c) > 0);
   $("#cm-count").textContent = entries.length ? `${entries.length} bracket${entries.length === 1 ? "" : "s"}` : "";
   if (!entries.length) { el.innerHTML = '<div class="empty">No brackets yet.</div>'; return; }
   const keep = $$("#cm-table .bk-scroll").map(x => x.scrollLeft);
