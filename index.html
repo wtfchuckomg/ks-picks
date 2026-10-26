@@ -2268,7 +2268,8 @@ const BK_FIELD = {
 const BK_ID = "po26";
 // Week-9 games already decided by a forfeit play as a bye: the winner goes
 // straight through and nobody picks it (Chuck, 2026-10-26: Brewster forfeited
-// to South Barber). The forfeiting school is named in the empty line.
+// to South Barber). The forfeiting school is named in the empty line, and every
+// bracket gets the game's point ("we're going to give everyone a win for that").
 const BK_FORFEIT = { "6M_0_14": "Brewster" };
 const bkByeText = g => BK_FORFEIT[g] ? `${esc(BK_FORFEIT[g])} &middot; forfeit` : "Bye";
 // Each game locks at 5:00 PM on the day it's played (Chuck, 2026-10-26): week 9's
@@ -2417,6 +2418,7 @@ function bkOut(act) {
 // Points so far, the most still possible, and correct picks.
 function bkScore(picks) {
   let pts = 0, left = 0, right = 0;
+  Object.keys(BK_FORFEIT).forEach(() => { pts += BK_PTS[0]; right++; });
   BK_CLASSES.forEach(c => {
     const act = bkActual(c), out = bkOut(act), mine = bkResolver(c, g => picks[g]);
     bkEach((r, i) => {
@@ -2493,7 +2495,8 @@ function bkGameHtml(c, r, i, picks, mode, ctx) {
     if (!t) return `<div class="bk-t bk-tbd"><span class="bk-nm">${r === 0 && bye ? bkByeText(g) : "&nbsp;"}</span></div>`;
     const w = ctx.act.win(r, i), [xa, xb] = ctx.act.teams(r, i), decided = !!(w && xa && xb);
     let cls = "";
-    if (mode === "actual") cls = decided ? (w === t ? "win" : "gone") : "";
+    if (r === 0 && BK_FORFEIT[g]) cls = mode === "actual" ? "win" : "hit";
+    else if (mode === "actual") cls = decided ? (w === t ? "win" : "gone") : "";
     else if (picks[g] === t && ctx.mine.win(r, i) === t) {
       cls = decided ? (w === t ? "hit" : "miss") : ctx.out.has(t) ? "miss" : "on";
     } else if (ctx.out.has(t) && bkLocked()) cls = "gone";
@@ -2631,6 +2634,8 @@ function bkBoardRows(cls) {
   return S.brackets.map(b => {
     const picks = b.picks || {}, rounds = [0, 0, 0, 0, 0];
     let pts = 0, n = 0;
+    // a forfeit counts as a win for everybody
+    Object.keys(BK_FORFEIT).forEach(g => { if (classes.includes(g.split("_")[0])) { pts += BK_PTS[0]; rounds[0] += BK_PTS[0]; } });
     const champs = classes.map(c => {
       const { act, out } = real[c], mine = bkResolver(c, g => picks[g]);
       bkEach((r, i) => {
