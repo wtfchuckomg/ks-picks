@@ -220,8 +220,8 @@ th.con{font-size:10px;font-weight:600;line-height:1.25;padding-bottom:2px;
 .bk-half{margin:0 0 18px}
 .bk-side{font-size:16px;font-weight:700;margin:0 0 8px;text-transform:none;letter-spacing:-.01em}
 .bk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;scroll-snap-type:x proximity}
-.bk-cols{display:flex;gap:14px;width:max-content}
-.bk-col{flex:0 0 196px;width:196px;display:flex;flex-direction:column;scroll-snap-align:start}
+.bk-cols{display:flex;gap:12px;width:max-content}
+.bk-col{flex:0 0 184px;width:184px;display:flex;flex-direction:column;scroll-snap-align:start}
 .bk-rh{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
 .bk-list{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px;min-height:1180px}
 .bk-slot{position:relative}
@@ -257,7 +257,6 @@ table.cm td{vertical-align:middle}
 .cm-c{background-image:linear-gradient(90deg,rgba(0,113,227,.14) var(--p,0%),transparent var(--p,0%));font-variant-numeric:tabular-nums}
 tr.cm-out td{opacity:.5}
 tr.cm-out .cm-team span:last-child{text-decoration:line-through}
-.bk-views{margin-top:-6px}
 .bk-steps{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding:2px 2px 4px}
 .bk-step{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;border-radius:12px;
   padding:8px 13px;font-size:13px;font-weight:600;line-height:1.1;color:var(--ink);
@@ -266,7 +265,7 @@ tr.cm-out .cm-team span:last-child{text-decoration:line-through}
 .bk-step.done small{color:var(--win);font-weight:700}
 .bk-step.cur{background:var(--g-blue,#0071E3);color:#fff;box-shadow:0 4px 12px rgba(0,113,227,.28)}
 .bk-step.cur small{color:rgba(255,255,255,.85)}
-.bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin:0 0 16px}
+.bk-grid{display:grid;grid-template-columns:1fr;gap:10px;margin:0 0 16px}
 .bk-grid .bk-t{min-height:48px;padding:6px 12px;gap:10px;font-size:15px}
 .bk-grid .bk-t .chip{flex:0 0 34px;width:34px;height:34px}
 .bk-grid .bk-t .chip.logo img{width:34px;height:34px}
@@ -628,7 +627,6 @@ label.f{color:var(--muted);font-weight:600}
     <section class="view" id="view-bracket" hidden>
       <div id="bk-banner"></div>
       <div class="bk-classes" id="bk-classes"></div>
-      <div class="bk-classes bk-views" id="bk-views"></div>
       <div id="bk-body"></div>
       <div class="savebar" id="bk-savebar" hidden>
         <span class="tally" id="bk-tally"></span>
@@ -2512,8 +2510,12 @@ function bkClassHtml(c, picks, mode) {
       }).join("")}</div></div>`).join("")}</div></div>`;
 }
 
-// Picking one round at a time, like ESPN: a round's games as cards; finish them
-// and the next round comes up; finish State and your whole bracket shows.
+// Phones pick one round at a time, like ESPN: a round's games as cards; finish them
+// and the next round comes up; finish State and the whole bracket shows. A desktop
+// gets the normal bracket (Chuck, 2026-10-26: "cards thing for mobile and keep
+// normal bracket for desktop").
+const BK_PHONE = window.matchMedia("(max-width: 760px)");
+BK_PHONE.addEventListener?.("change", () => { S.bkSeen = null; if (S.view === "bracket") render(); });
 function bkGuideHtml(c, picks, mode) {
   const ctx = { act: bkActual(c), mine: bkResolver(c, g => picks[g]) };
   ctx.out = bkOut(ctx.act);
@@ -2530,7 +2532,7 @@ function bkGuideHtml(c, picks, mode) {
   const nav = `<div class="bk-gnav">
     ${r > 0 ? `<button class="btn ghost" data-step="${r - 1}">&lsaquo; ${BK_ROUND[r - 1]}</button>` : ""}
     ${r < 4 ? `<button class="btn ghost" data-step="${r + 1}">${BK_ROUND[r + 1]} &rsaquo;</button>` : ""}
-    <button class="btn ghost" data-bkv="full">See my bracket</button></div>`;
+    </div>`;
   return steps + body + nav;
 }
 function bkNextClass(c, picks) {
@@ -2565,25 +2567,21 @@ function renderBracket() {
       n == null ? "" : `<small>${n}/${all}</small>`}</button>`;
   }).join("");
 
-  // Round by round while you're still picking; the full bracket once a class is done.
+  // On a phone, open a class on the first round you haven't finished.
   const pickable = !locked && !viewing && (mode === "mine" || (mode === "actual" && !S.me));
-  const seen = `${c}:${S.me ? (S.bkDraft ? "d" : "-") : "x"}:${pickable}`;
-  if (S.bkSeen !== seen) {
-    S.bkSeen = seen;
-    const k = bkFirstOpen(c, picks);
-    S.bkRound = k < 0 ? 4 : k;
-    S.bkView = pickable && k >= 0 ? "guided" : "full";
-  }
-  if (!pickable) S.bkView = "full";
-  const guided = S.bkView === "guided";
-  $("#bk-views").innerHTML = pickable ? `
-    <button class="bk-chip" data-bkv="guided" aria-pressed="${guided}">Pick by round</button>
-    <button class="bk-chip" data-bkv="full" aria-pressed="${!guided}">Full bracket</button>` : "";
-
+  const phone = BK_PHONE.matches;
+  const seen = `${c}:${S.me ? (S.bkDraft ? "d" : "-") : "x"}:${pickable}:${phone}`;
+  // No choice to make: the screen decides. A phone picks round by round until the
+  // class is filled in, then shows the whole bracket; a desktop shows the bracket.
+  const open = bkFirstOpen(c, picks);
+  if (S.bkSeen !== seen) { S.bkSeen = seen; S.bkRound = open < 0 ? 4 : open; }
+  const guided = phone && pickable && open >= 0;
+  if (guided && S.bkWasFull) S.bkRound = open;      // a pick taken back out reopens its round
+  S.bkWasFull = !guided;
   let top = "";
   if (!guided && pickable && S.me && bkFirstOpen(c, picks) < 0) {
     const next = bkNextClass(c, picks);
-    top = `<div class="bk-done"><b>${esc(bkTab(c))} is filled in.</b>${next
+    top += `<div class="bk-done"><b>${esc(bkTab(c))} is filled in.</b>${next
       ? ` <button class="btn" data-nextc="${next}">Next: ${esc(bkTab(next))} &rsaquo;</button>`
       : " Every class is done."}</div>`;
   }
@@ -2634,13 +2632,7 @@ $("#view-bracket").addEventListener("click", e => {
   const chip = e.target.closest("[data-bkc]");
   if (chip) { S.bkClass = chip.dataset.bkc; render(); return; }
   const step = e.target.closest("[data-step]");
-  if (step) { S.bkRound = +step.dataset.step; S.bkView = "guided"; render(); bkTop(); return; }
-  const v = e.target.closest("[data-bkv]");
-  if (v) {
-    S.bkView = v.dataset.bkv;
-    if (S.bkView === "guided") { const k = bkFirstOpen(S.bkClass, S.bkDraft || {}); S.bkRound = k < 0 ? 0 : k; }
-    render(); bkTop(); return;
-  }
+  if (step) { S.bkRound = +step.dataset.step; render(); bkTop(); return; }
   const nc = e.target.closest("[data-nextc]");
   if (nc) { S.bkClass = nc.dataset.nextc; S.bkSeen = null; render(); bkTop(); return; }
   if (e.target.closest("#bk-back")) { S.bkWho = null; render(); return; }
@@ -2663,10 +2655,11 @@ $("#view-bracket").addEventListener("click", e => {
   bkSanitize(S.bkDraft);
   bkKeep();
   delete $("#bk-status").dataset.sticky;
-  // The tap that finishes a round brings up the next one; finishing State shows the bracket.
+  // On a phone, the tap that finishes a round brings up the next one; finishing
+  // State shows the whole bracket.
   const R = bkRounds(c, S.bkDraft)[r];
-  const advance = S.bkView === "guided" && !wasDone && R.done === R.all;
-  if (advance) { if (r < 4) S.bkRound = r + 1; else S.bkView = "full"; }
+  const advance = BK_PHONE.matches && !wasDone && R.done === R.all;
+  if (advance && r < 4) S.bkRound = r + 1;
   render();
   if (advance) bkTop();
   bkAutoSave();
