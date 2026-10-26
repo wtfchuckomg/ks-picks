@@ -250,13 +250,6 @@ button.bk-t:hover{background:rgba(0,113,227,.07)}
 .bk-pv{display:block;padding:3px 8px 4px;font-size:11px;font-weight:600;color:var(--g-blue,#0071E3);
   text-align:right;text-decoration:none;border-top:1px solid rgba(29,29,31,.08)}
 .bk-pv:hover{text-decoration:underline}
-table.cm td{vertical-align:middle}
-.cm-team{display:flex;align-items:center;gap:7px;white-space:nowrap}
-.cm-team .chip{flex:0 0 22px;width:22px;height:22px;font-size:8px;border-radius:5px;box-shadow:none}
-.cm-team .chip.logo img{width:22px;height:22px}
-.cm-c{background-image:linear-gradient(90deg,rgba(0,113,227,.14) var(--p,0%),transparent var(--p,0%));font-variant-numeric:tabular-nums}
-tr.cm-out td{opacity:.5}
-tr.cm-out .cm-team span:last-child{text-decoration:line-through}
 .bk-steps{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding:2px 2px 4px}
 .bk-step{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;border-radius:12px;
   padding:8px 13px;font-size:13px;font-weight:600;line-height:1.1;color:var(--ink);
@@ -272,6 +265,24 @@ tr.cm-out .cm-team span:last-child{text-decoration:line-through}
 .bk-grid .bk-sd{font-size:12px;min-width:22px}
 .bk-gnav{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
 .bk-done{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;font-size:14px}
+table.bk-lb td,table.bk-lb th{white-space:nowrap}
+.bk-champs{display:flex;gap:4px;align-items:center}
+.bk-champ{position:relative;display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;color:var(--muted)}
+.bk-champ .chip{flex:0 0 30px;width:30px;height:30px;font-size:9px;border-radius:6px;box-shadow:none}
+.bk-champ .chip.logo img{width:30px;height:30px}
+.bk-champ.miss .chip{opacity:.55}
+.bk-champ i{position:absolute;top:-4px;left:-4px;width:15px;height:15px;border-radius:50%;font:700 9px/15px var(--g-sans,sans-serif);
+  font-style:normal;text-align:center;color:#fff;box-shadow:0 0 0 2px #fff}
+.bk-champ.hit i{background:#34A853}
+.bk-champ.miss i{background:#EA4335}
+.bk-sort{border:0;background:none;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(29,29,31,.25)}
+.bk-sort.on{color:var(--ink);text-decoration-color:currentColor}
+.bk-people .bk-t{padding-right:0}
+.bk-wide .bk-col{flex:0 0 200px;width:200px}
+.bk-wide .bk-cols{gap:10px}
+.bk-pct{flex:0 0 42px;align-self:stretch;display:flex;align-items:center;justify-content:center;margin:-4px 0;
+  font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#1D1D1F;background:#F7BA00}
+.bk-people .bk-t:not(.win) .bk-pct{background:#FBE3A0;color:#5C4A00}
 .bk-day{flex:0 0 auto;margin-left:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
@@ -601,6 +612,7 @@ label.f{color:var(--muted);font-weight:600}
         <button class="bk-chip" data-bm="bracket">Bracket Challenge</button>
       </div>
       <div id="board-bracket" hidden>
+        <div class="bk-classes" id="bk-board-classes"></div>
         <div class="card">
           <div class="card-hd"><h2>Bracket Challenge standings</h2></div>
           <div class="card-bd twrap" id="bk-board"></div>
@@ -638,10 +650,8 @@ label.f{color:var(--muted);font-weight:600}
     <!-- ---- COMMUNITY ---- -->
     <section class="view" id="view-community" hidden>
       <div class="bk-classes" id="cm-classes"></div>
-      <div class="card">
-        <div class="card-hd"><h2 id="cm-title">Community picks</h2><span class="hint" id="cm-count"></span></div>
-        <div class="card-bd twrap" id="cm-table"></div>
-      </div>
+      <div class="card-hd"><h2 id="cm-title">The People&rsquo;s Bracket</h2><span class="hint" id="cm-count"></span></div>
+      <div id="cm-table" class="bk-wide"></div>
     </section>
 
     <!-- ---- MY RESULTS ---- -->
@@ -1405,6 +1415,10 @@ $("#board-week").addEventListener("change", e => { S.boardWeekId = e.target.valu
 $("#view-board").addEventListener("click", e => {
   const m = e.target.closest("[data-bm]");
   if (m) { S.boardMode = m.dataset.bm; render(); return; }
+  const bc = e.target.closest("[data-bbc]");
+  if (bc) { S.bkBoardClass = bc.dataset.bbc; render(); return; }
+  const so = e.target.closest("[data-sort]");
+  if (so) { S.bkSort = so.dataset.sort; render(); return; }
   const who = e.target.closest("[data-who]");
   if (who && (bkLocked() || S.isAdmin)) {
     S.bkWho = S.me && bkMine()?.id === who.dataset.who ? null : who.dataset.who;
@@ -2603,28 +2617,70 @@ function renderBracket() {
   }
 }
 
+// The leaderboard, laid out like ESPN's (Chuck, 2026-10-26): rank, champion,
+// player, points, percentile, then the points from each round, latest first.
+// "All" adds up every class; a class shows just that bracket.
+function bkBoardRows(cls) {
+  const classes = cls === "All" ? BK_CLASSES : [cls];
+  const real = Object.fromEntries(classes.map(c => { const act = bkActual(c); return [c, { act, out: bkOut(act) }]; }));
+  return S.brackets.map(b => {
+    const picks = b.picks || {}, rounds = [0, 0, 0, 0, 0];
+    let pts = 0, n = 0;
+    const champs = classes.map(c => {
+      const { act, out } = real[c], mine = bkResolver(c, g => picks[g]);
+      bkEach((r, i) => {
+        const p = picks[bkGid(c, r, i)];
+        if (p && !mine.teams(r, i)[2] && mine.win(r, i) === p) n++;
+        if (!p || mine.teams(r, i)[2] || mine.win(r, i) !== p) return;
+        const [a, bb] = act.teams(r, i), w = act.win(r, i);
+        if (a && bb && w === p) { pts += BK_PTS[r]; rounds[r] += BK_PTS[r]; }
+      });
+      const champ = mine.win(4, 0), real4 = act.win(4, 0);
+      const state = !champ ? "" : real4 ? (real4 === champ ? "hit" : "miss") : out.has(champ) ? "miss" : "";
+      return { c, champ, state };
+    });
+    return { b, pts, rounds, n, champs };
+  });
+}
+const BK_SORTS = { pts: x => x.pts, r4: x => x.rounds[4], r3: x => x.rounds[3], r2: x => x.rounds[2], r1: x => x.rounds[1], r0: x => x.rounds[0] };
 function renderBracketBoard() {
   const el = $("#bk-board");
   const locked = bkLocked();
   if (!locked && !S.isAdmin) {
+    $("#bk-board-classes").innerHTML = "";
     el.innerHTML = '<div class="empty">Standings start when brackets lock, Friday at 5:00 PM.</div>';
     return;
   }
-  const rows = S.brackets.map(b => ({ b, s: bkScore(b.picks || {}),
-    n: BK_CLASSES.reduce((a, k) => a + bkCount(b.picks || {}, k), 0) }));
-  rows.sort((x, y) => y.s.pts - x.s.pts || y.s.max - x.s.max || x.b.name.localeCompare(y.b.name));
-  let rank = 0, prev = null;
-  el.innerHTML = rows.length ? `<table>
-    <thead><tr><th class="rank">#</th><th>Player</th>${locked
-      ? `<th class="num">Pts</th><th class="num">Correct</th><th class="num">Max</th>` : `<th class="num">Picked</th>`}</tr></thead>
-    <tbody>${rows.map((x, k) => {
-      const key = x.s.pts + ":" + x.s.max; if (key !== prev) { rank = k + 1; prev = key; }
-      const me = S.me && x.b.playerId === S.me.id;
-      return `<tr class="${locked && rank === 1 && x.s.pts > 0 ? "leader" : ""}">
-        <td class="rank">${locked ? rank : k + 1}</td>
+  const cls = ["All", ...BK_CLASSES].includes(S.bkBoardClass) ? S.bkBoardClass : "All";
+  $("#bk-board-classes").innerHTML = ["All", ...BK_CLASSES].map(k =>
+    `<button class="bk-chip" data-bbc="${k}" aria-pressed="${k === cls}">${k === "All" ? "All classes" : bkTab(k)}</button>`).join("");
+  const rows = bkBoardRows(cls);
+  // Rank and percentile always go by points; the round columns only re-sort the list.
+  const byPts = rows.slice().sort((x, y) => y.pts - x.pts);
+  const rankOf = new Map(), N = rows.length;
+  byPts.forEach((x, k) => rankOf.set(x, k && x.pts === byPts[k - 1].pts ? rankOf.get(byPts[k - 1]) : k + 1));
+  const below = x => rows.filter(y => y.pts < x.pts).length;
+  const key = BK_SORTS[S.bkSort] ? S.bkSort : "pts";
+  rows.sort((x, y) => BK_SORTS[key](y) - BK_SORTS[key](x) || y.pts - x.pts || x.b.name.localeCompare(y.b.name));
+  const head = (k, label) => `<th class="num"><button class="bk-sort${key === k ? " on" : ""}" data-sort="${k}">${label}</button></th>`;
+  const champCell = x => `<td><div class="bk-champs">${x.champs.map(ch => ch.champ
+    ? `<span class="bk-champ ${ch.state}" title="${esc(bkTab(ch.c))}: ${esc(ch.champ)}">${crest(ch.champ)}${
+        ch.state ? `<i>${ch.state === "hit" ? "&#10003;" : "&#10005;"}</i>` : ""}</span>`
+    : `<span class="bk-champ none" title="${esc(bkTab(ch.c))}">&ndash;</span>`).join("")}</div></td>`;
+  el.innerHTML = rows.length ? `<table class="bk-lb">
+    <thead><tr><th class="rank">Rank</th><th>${cls === "All" ? "Champs" : "Champ"}</th><th>Player</th>
+      ${head("pts", "Pts")}<th class="num">Pct</th>
+      ${head("r4", "State")}${head("r3", "Sub")}${head("r2", "Sec")}${head("r1", "Reg")}${head("r0", "Wk 9")}
+      ${locked ? "" : `<th class="num">Picked</th>`}</tr></thead>
+    <tbody>${rows.map(x => {
+      const me = S.me && x.b.playerId === S.me.id, rank = rankOf.get(x);
+      const pct = N > 1 ? (below(x) / (N - 1) * 100).toFixed(1) : "100.0";
+      return `<tr class="${rank === 1 && x.pts > 0 ? "leader" : ""}">
+        <td class="rank">${rank}</td>${champCell(x)}
         <td><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none">${esc(x.b.name)}</button>${me ? '<span class="you-chip">you</span>' : ""}</td>
-        ${locked ? `<td class="num"><b>${x.s.pts}</b></td><td class="num">${x.s.right}</td><td class="num">${x.s.max}</td>`
-                 : `<td class="num">${x.n}<span style="color:var(--muted)">/${BK_PICKABLE}</span></td>`}</tr>`;
+        <td class="num"><b>${x.pts}</b></td><td class="num">${pct}</td>
+        ${[4, 3, 2, 1, 0].map(r => `<td class="num">${x.rounds[r]}</td>`).join("")}
+        ${locked ? "" : `<td class="num">${x.n}<span style="color:var(--muted)">/${cls === "All" ? BK_PICKABLE : 31 - BK_FIELD[cls].filter(v => !v).length}</span></td>`}</tr>`;
     }).join("")}</tbody></table>`
     : '<div class="empty">No brackets yet.</div>';
 }
@@ -2697,43 +2753,55 @@ $("#bk-save").addEventListener("click", async () => {
   } finally { btn.disabled = false; }
 });
 
-/* ---- Community: how the contest is picking ----
-   For each school, the share of brackets that have it winning each round.
+/* ---- Community: the People's Bracket, like ESPN's ----
+   The bracket as the contest picked it: each game shows the two teams most
+   brackets have meeting there, and the share of brackets taking each to win.
    Brackets are private until the Friday lock, so before then only the
-   commissioner sees this. */
+   commissioner sees it. */
+function bkPeopleHtml(c, entries) {
+  const each = entries.map(b => bkResolver(c, g => (b.picks || {})[g]));
+  const tally = (r, i, t) => each.reduce((n, R) => n + (R.win(r, i) === t ? 1 : 0), 0);
+  // the consensus winner of every game, better seed on a tie
+  const P = bkResolver(c, (g, a, b) => {
+    if (!a || !b) return a || b;
+    const [r, i] = g.split("_").slice(1).map(Number), ca = tally(r, i, a), cb = tally(r, i, b);
+    return ca !== cb ? (ca > cb ? a : b) : bkRank(c, a) <= bkRank(c, b) ? a : b;
+  });
+  const game = (r, i) => {
+    const [a, b, bye] = P.teams(r, i);
+    const ca = a ? tally(r, i, a) : 0, cb = b ? tally(r, i, b) : 0, n = ca + cb;
+    const row = (t, k) => {
+      if (!t) return `<div class="bk-t bk-tbd"><span class="bk-nm">${bye ? "Bye" : "&nbsp;"}</span></div>`;
+      const pct = bye ? "" : n ? Math.round(k / n * 100) + "%" : "&ndash;";
+      return `<div class="bk-t${P.win(r, i) === t && !bye ? " win" : ""}"><span class="bk-sd">${esc(bkSeedText(c, t))}</span>${bkMark(t)}<span class="bk-nm">${esc(t)}</span>${
+        pct ? `<span class="bk-pct">${pct}</span>` : ""}</div>`;
+    };
+    return `<div class="bk-g bk-people">${row(a, ca)}${row(b, cb)}</div>`;
+  };
+  const tag = (r, i) => (r === 0 && (i === 0 || i === 8)) || r === 3
+    ? `<span class="bk-sidetag">${(r === 0 ? i === 8 : i === 1) ? "West" : "East"}</span>` : "";
+  return `<div class="bk-scroll"><div class="bk-cols">${[0, 1, 2, 3, 4].map(r =>
+    `<div class="bk-col"><div class="bk-rh">${BK_ROUND[r]}</div>
+      <div class="bk-list">${Array.from({ length: BK_GAMES[r] }, (_, i) => {
+        const t = tag(r, i);
+        return `<div class="bk-slot${t ? " tagged" : ""}">${t}${game(r, i)}</div>`;
+      }).join("")}</div></div>`).join("")}</div></div>`;
+}
 function renderCommunity() {
   bkSubscribe();
   if (!BK_CLASSES.includes(S.bkClass)) S.bkClass = "6A";
   const c = S.bkClass, open = bkLocked() || S.isAdmin;
   $("#cm-classes").innerHTML = BK_CLASSES.map(k =>
     `<button class="bk-chip" data-cmc="${k}" aria-pressed="${k === c}">${bkTab(k)}</button>`).join("");
-  $("#cm-title").textContent = c.startsWith("8M") || c === "6M" ? bkTab(c) : "Class " + c;
+  $("#cm-title").textContent = "The People\u2019s Bracket \u00b7 " + (c.startsWith("8M") || c === "6M" ? bkTab(c) : "Class " + c);
   const el = $("#cm-table");
   if (!open) { $("#cm-count").textContent = ""; el.innerHTML = '<div class="empty">Opens when brackets lock, Friday at 5:00 PM.</div>'; return; }
   const entries = S.brackets.filter(b => bkCount(b.picks || {}, c) > 0);
   $("#cm-count").textContent = entries.length ? `${entries.length} bracket${entries.length === 1 ? "" : "s"}` : "";
   if (!entries.length) { el.innerHTML = '<div class="empty">No brackets yet.</div>'; return; }
-  // reached[team][r] = brackets with the team winning its round-r game
-  const reached = new Map(BK_FIELD[c].filter(Boolean).map(([n]) => [n, [0, 0, 0, 0, 0]]));
-  entries.forEach(b => {
-    const R = bkResolver(c, g => (b.picks || {})[g]);
-    bkEach((r, i) => { const w = R.win(r, i); if (w && reached.has(w)) reached.get(w)[r]++; });
-  });
-  const act = bkActual(c), out = bkOut(act);
-  const byes = new Set(); BK_FIELD[c].forEach((x, k) => { if (!x) { const o = BK_FIELD[c][k ^ 1]; if (o) byes.add(o[0]); } });
-  const rows = [...reached.entries()].map(([n, v]) => ({ n, v }))
-    .sort((x, y) => { for (let r = 4; r >= 0; r--) if (y.v[r] !== x.v[r]) return y.v[r] - x.v[r]; return bkRank(c, x.n) - bkRank(c, y.n); });
-  const pct = (k, bye) => {
-    if (bye) return '<td class="num cm-c" style="color:var(--muted)">Bye</td>';
-    const p = Math.round(k / entries.length * 100);
-    return `<td class="num cm-c" style="--p:${p}%">${p ? p + "%" : '<span style="color:var(--muted)">—</span>'}</td>`;
-  };
-  el.innerHTML = `<table class="cm">
-    <thead><tr><th>School</th><th class="num">Wk 9</th><th class="num">Regional</th><th class="num">Sectional</th>
-      <th class="num">Sub-State</th><th class="num">Champion</th></tr></thead>
-    <tbody>${rows.map(x => `<tr class="${out.has(x.n) ? "cm-out" : ""}">
-      <td><span class="cm-team"><span class="bk-sd">${esc(bkSeedText(c, x.n))}</span>${bkMark(x.n)}<span>${esc(x.n)}</span></span></td>
-      ${x.v.map((k, r) => pct(k, r === 0 && byes.has(x.n))).join("")}</tr>`).join("")}</tbody></table>`;
+  const keep = $$("#cm-table .bk-scroll").map(x => x.scrollLeft);
+  el.innerHTML = bkPeopleHtml(c, entries);
+  $$("#cm-table .bk-scroll").forEach((x, k) => { if (keep[k]) x.scrollLeft = keep[k]; });
 }
 $("#view-community").addEventListener("click", e => {
   const chip = e.target.closest("[data-cmc]");
