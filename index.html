@@ -1358,7 +1358,8 @@ function renderRail() {
 }
 
 function renderBoard() {
-  const mode = S.boardMode === "bracket" ? "bracket" : "pickem";
+  // The Bracket Challenge first while the playoffs are on (Chuck, 2026-10-26).
+  const mode = S.boardMode === "pickem" ? "pickem" : "bracket";
   $$("#board-mode [data-bm]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.bm === mode)));
   $("#board-bracket").hidden = mode !== "bracket";
   $("#board-pickem").hidden = mode !== "pickem";
