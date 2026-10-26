@@ -223,7 +223,10 @@ th.con{font-size:10px;font-weight:600;line-height:1.25;padding-bottom:2px;
 .bk-cols{display:flex;gap:14px;width:max-content}
 .bk-col{flex:0 0 196px;width:196px;display:flex;flex-direction:column;scroll-snap-align:start}
 .bk-rh{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
-.bk-list{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px;min-height:576px}
+.bk-list{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px;min-height:1180px}
+.bk-slot{position:relative}
+.bk-slot.tagged{padding-top:17px}
+.bk-sidetag{position:absolute;top:0;left:2px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .bk-g{border-radius:12px;overflow:hidden;background:rgba(255,255,255,.78);
   box-shadow:inset 0 0 0 1px rgba(29,29,31,.1),0 2px 8px rgba(30,40,90,.06)}
 .bk-state .bk-g{max-width:240px}
@@ -578,9 +581,20 @@ label.f{color:var(--muted);font-weight:600}
 
     <!-- ---- STANDINGS ---- -->
     <section class="view" id="view-board" hidden>
+      <div class="bk-classes" id="board-mode">
+        <button class="bk-chip" data-bm="pickem">Pick &rsquo;Em</button>
+        <button class="bk-chip" data-bm="bracket">Bracket Challenge</button>
+      </div>
+      <div id="board-bracket" hidden>
+        <div class="card">
+          <div class="card-hd"><h2>Bracket Challenge standings</h2></div>
+          <div class="card-bd twrap" id="bk-board"></div>
+        </div>
+      </div>
+      <div id="board-pickem">
       <div class="card">
         <div class="card-hd">
-          <h2>Season standings</h2>
+          <h2>Pick &rsquo;Em season standings</h2>
         </div>
         <div class="card-bd twrap" id="season-table"></div>
       </div>
@@ -590,6 +604,7 @@ label.f{color:var(--muted);font-weight:600}
           <select id="board-week" style="width:auto;margin-left:auto"></select>
         </div>
         <div class="card-bd twrap" id="week-table"></div>
+      </div>
       </div>
     </section>
 
@@ -602,10 +617,6 @@ label.f{color:var(--muted);font-weight:600}
         <span class="tally" id="bk-tally"></span>
         <span class="status" id="bk-status"></span>
         <button class="btn lamp" id="bk-save">Save bracket</button>
-      </div>
-      <div class="card" id="bk-board-card" hidden>
-        <div class="card-hd"><h2>Bracket standings</h2></div>
-        <div class="card-bd twrap" id="bk-board"></div>
       </div>
     </section>
 
@@ -1098,8 +1109,13 @@ function renderClock() {
   const w = activeWeek();
   const el = $("#clock"), val = $("#clock-val"), lab = $("#clock-label");
   el.classList.remove("locked", "soon");
-  if (!w) { lab.textContent = "Status"; val.textContent = "—"; return; }
-  const d = deadlineDate(w);
+  // In the playoffs the bracket is what's open: once the week's card is locked
+  // (or there's no week), the clock counts down to the bracket's next lock —
+  // Thursday's games, then Friday's.
+  const weekOpen = w && !isLocked(w);
+  const bkNext = !bkThuLocked() ? BK_LOCK_THU : !bkLocked() ? BK_LOCK : null;
+  if (!w && !bkNext) { lab.textContent = "Status"; val.textContent = "—"; return; }
+  const d = !weekOpen && bkNext ? bkNext : deadlineDate(w);
   const ms = d ? d.getTime() - Date.now() : -1;
   if (ms <= 0) {
     lab.textContent = "Picks";
@@ -1327,6 +1343,16 @@ function renderRail() {
 }
 
 function renderBoard() {
+  const mode = S.boardMode === "bracket" ? "bracket" : "pickem";
+  $$("#board-mode [data-bm]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.bm === mode)));
+  $("#board-bracket").hidden = mode !== "bracket";
+  $("#board-pickem").hidden = mode !== "pickem";
+  if (mode === "bracket") {
+    bkSubscribe();
+    if (Date.now() - BKR.at > 10 * 60e3 && !BKR.loading) bkLoadResults().then(() => { if (S.view === "board") render(); });
+    renderBracketBoard();
+    return;
+  }
   const rows = seasonRows();
   const scored = S.weeks.filter(w => w.scored);
 
@@ -1360,6 +1386,15 @@ function renderBoard() {
     : '<div class="empty">No scores for this week.</div>';
 }
 $("#board-week").addEventListener("change", e => { S.boardWeekId = e.target.value; renderBoard(); });
+$("#view-board").addEventListener("click", e => {
+  const m = e.target.closest("[data-bm]");
+  if (m) { S.boardMode = m.dataset.bm; render(); return; }
+  const who = e.target.closest("[data-who]");
+  if (who && (bkLocked() || S.isAdmin)) {
+    S.bkWho = S.me && bkMine()?.id === who.dataset.who ? null : who.dataset.who;
+    location.hash = "#bracket"; window.scrollTo({ top: 0 });
+  }
+});
 
 /* ==========================================================
    10. My Results
@@ -2429,18 +2464,19 @@ function bkPreviewUrl(c, r, a, b) {
   const [home, away] = bkRank(c, b) < bkRank(c, a) ? [b, a] : [a, b];
   return `${BK_STATS}?matchup&a=${encodeURIComponent(away)}&h=${encodeURIComponent(home)}`;
 }
+// One bracket, read left to right: East on top, West below, and State in its own
+// column at the end, level with the middle (Chuck: State at the bottom was weird).
 function bkClassHtml(c, picks, mode) {
   const ctx = { act: bkActual(c), mine: bkResolver(c, g => picks[g]) };
   ctx.out = bkOut(ctx.act);
-  const half = (name, h) => `<div class="bk-half">
-    <h3 class="bk-side">${name}</h3>
-    <div class="bk-scroll"><div class="bk-cols">${[0, 1, 2, 3].map(r => {
-      const n = BK_GAMES[r] / 2, from = h * n;
-      return `<div class="bk-col"><div class="bk-rh">${BK_ROUND[r]} · ${BK_PTS[r]}</div>
-        <div class="bk-list">${Array.from({ length: n }, (_, k) => bkGameHtml(c, r, from + k, picks, mode, ctx)).join("")}</div></div>`;
-    }).join("")}</div></div></div>`;
-  return half("East", 0) + half("West", 1) + `<div class="bk-half bk-state">
-    <h3 class="bk-side">State &middot; ${BK_PTS[4]}</h3>${bkGameHtml(c, 4, 0, picks, mode, ctx)}</div>`;
+  const tag = (r, i) => (r === 0 && (i === 0 || i === 8)) || r === 3
+    ? `<span class="bk-sidetag">${(r === 0 ? i === 8 : i === 1) ? "West" : "East"}</span>` : "";
+  return `<div class="bk-scroll"><div class="bk-cols">${[0, 1, 2, 3, 4].map(r =>
+    `<div class="bk-col"><div class="bk-rh">${BK_ROUND[r]} · ${BK_PTS[r]}</div>
+      <div class="bk-list">${Array.from({ length: BK_GAMES[r] }, (_, i) => {
+        const t = tag(r, i);
+        return `<div class="bk-slot${t ? " tagged" : ""}">${t}${bkGameHtml(c, r, i, picks, mode, ctx)}</div>`;
+      }).join("")}</div></div>`).join("")}</div></div>`;
 }
 
 function renderBracket() {
@@ -2484,28 +2520,29 @@ function renderBracket() {
     const st = $("#bk-status");
     if (!st.dataset.sticky) { st.className = "status"; st.textContent = S.me && bkDirty() ? "Not saved yet" : ""; }
   }
-  renderBracketBoard();
 }
 
 function renderBracketBoard() {
-  const el = $("#bk-board"), card = $("#bk-board-card");
+  const el = $("#bk-board");
   const locked = bkLocked();
-  card.hidden = !locked && !S.isAdmin;
-  if (card.hidden) return;
+  if (!locked && !S.isAdmin) {
+    el.innerHTML = '<div class="empty">Standings start when brackets lock, Friday at 5:00 PM.</div>';
+    return;
+  }
   const rows = S.brackets.map(b => ({ b, s: bkScore(b.picks || {}),
     n: BK_CLASSES.reduce((a, k) => a + bkCount(b.picks || {}, k), 0) }));
   rows.sort((x, y) => y.s.pts - x.s.pts || y.s.max - x.s.max || x.b.name.localeCompare(y.b.name));
   let rank = 0, prev = null;
   el.innerHTML = rows.length ? `<table>
     <thead><tr><th class="rank">#</th><th>Player</th>${locked
-      ? `<th class="num">Pts</th><th class="num">Max</th>` : `<th class="num">Picked</th>`}</tr></thead>
+      ? `<th class="num">Pts</th><th class="num">Correct</th><th class="num">Max</th>` : `<th class="num">Picked</th>`}</tr></thead>
     <tbody>${rows.map((x, k) => {
       const key = x.s.pts + ":" + x.s.max; if (key !== prev) { rank = k + 1; prev = key; }
       const me = S.me && x.b.playerId === S.me.id;
       return `<tr class="${locked && rank === 1 && x.s.pts > 0 ? "leader" : ""}">
         <td class="rank">${locked ? rank : k + 1}</td>
         <td><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none">${esc(x.b.name)}</button>${me ? '<span class="you-chip">you</span>' : ""}</td>
-        ${locked ? `<td class="num"><b>${x.s.pts}</b></td><td class="num">${x.s.max}</td>`
+        ${locked ? `<td class="num"><b>${x.s.pts}</b></td><td class="num">${x.s.right}</td><td class="num">${x.s.max}</td>`
                  : `<td class="num">${x.n}<span style="color:var(--muted)">/${BK_PICKABLE}</span></td>`}</tr>`;
     }).join("")}</tbody></table>`
     : '<div class="empty">No brackets yet.</div>';
