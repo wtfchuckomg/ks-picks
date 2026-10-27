@@ -267,6 +267,8 @@ button.bk-t:hover{background:rgba(0,113,227,.07)}
 .bk-done{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;font-size:14px}
 table.bk-lb td,table.bk-lb th{white-space:nowrap}
 .bk-champs{display:flex;gap:4px;align-items:center}
+.bk-name{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:760px){.bk-name{max-width:150px}}
 .bk-champ{position:relative;display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;color:var(--muted)}
 .bk-champ .chip{flex:0 0 30px;width:30px;height:30px;font-size:9px;border-radius:6px;box-shadow:none}
 .bk-champ .chip.logo img{width:30px;height:30px}
@@ -2785,8 +2787,8 @@ function renderBracketBoard() {
       const pct = N > 1 ? (below(x) / (N - 1) * 100).toFixed(1) : "100.0";
       return `<tr class="${rank === 1 && x.pts > 0 ? "leader" : ""}">
         <td class="rank">${rank}</td>${champCell(x)}
-        <td><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none"><b>${esc(bkNickOf(x.b))}</b></button>
-          ${S.isAdmin ? `<span class="bk-owner">${esc(x.b.name)}</span>` : ""}${me ? '<span class="you-chip">you</span>' : ""}</td>
+        <td><div class="bk-name"><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none"><b>${esc(bkNickOf(x.b))}</b></button>
+          ${S.isAdmin ? `<span class="bk-owner">${esc(x.b.name)}</span>` : ""}${me ? '<span class="you-chip">you</span>' : ""}</div></td>
         <td class="num"><b>${x.pts}</b></td><td class="num">${pct}</td>
         ${[4, 3, 2, 1, 0].map(r => `<td class="num">${x.rounds[r]}</td>`).join("")}
         ${locked ? "" : `<td class="num">${x.n}<span style="color:var(--muted)">/${cls === "All" ? BK_PICKABLE : 31 - BK_FIELD[cls].filter(v => !v).length}</span></td>`}</tr>`;
