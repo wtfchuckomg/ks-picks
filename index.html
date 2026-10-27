@@ -283,6 +283,12 @@ table.bk-lb td,table.bk-lb th{white-space:nowrap}
 .bk-pct{flex:0 0 42px;align-self:stretch;display:flex;align-items:center;justify-content:center;margin:-4px 0;
   font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#1D1D1F;background:#F7BA00}
 .bk-people .bk-t:not(.win) .bk-pct{background:#FBE3A0;color:#5C4A00}
+.bk-mine{margin:0 0 4px}
+.bk-mine .bk-chip[aria-pressed="true"]{background:var(--ink);box-shadow:none}
+.bk-add{color:var(--g-blue,#0071E3)}
+.bk-nickrow{display:flex;align-items:center;gap:8px;margin:-4px 0 14px;font-size:12px;font-weight:600;color:var(--muted)}
+.bk-nickrow input{width:220px;max-width:60vw;font-size:14px;padding:6px 10px}
+.bk-owner{margin-left:6px;font-size:12px;color:var(--muted)}
 .bk-day{flex:0 0 auto;margin-left:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
@@ -638,6 +644,7 @@ label.f{color:var(--muted);font-weight:600}
     <!-- ---- BRACKET ---- -->
     <section class="view" id="view-bracket" hidden>
       <div id="bk-banner"></div>
+      <div class="bk-mine" id="bk-mine"></div>
       <div class="bk-classes" id="bk-classes"></div>
       <div id="bk-body"></div>
       <div class="savebar" id="bk-savebar" hidden>
@@ -932,7 +939,7 @@ const S = {
   view: "picks", showGate: false,
   draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
   admWeekId: null, admDraft: null,
-  brackets: [], bkVotes: [], bkMeta: {}, bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null,
+  brackets: [], bkVotes: [], bkMeta: {}, bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null, bkSlot: 1, bkNick: "", bkNewSlot: 0,
   boardWeekId: null,
   ready: false
 };
@@ -1426,7 +1433,8 @@ $("#view-board").addEventListener("click", e => {
   if (so) { S.bkSort = so.dataset.sort; render(); return; }
   const who = e.target.closest("[data-who]");
   if (who && (bkLocked() || S.isAdmin)) {
-    S.bkWho = S.me && bkMine()?.id === who.dataset.who ? null : who.dataset.who;
+    const own = bkMineAll().find(b => b.id === who.dataset.who);
+    if (own) { S.bkWho = null; bkUseSlot(bkSlotOf(own)); } else S.bkWho = who.dataset.who;
     location.hash = "#bracket"; window.scrollTo({ top: 0 });
   }
 });
@@ -2458,24 +2466,69 @@ function bkSubscribe() {
     render();
   }, err => { console.warn("brackets:", err); S.bkLoaded = true; render(); });
 }
-const bkMine = () => S.me ? S.brackets.find(b => b.playerId === S.me.id) : null;
-const bkStoreKey = () => `bk-${BK_ID}-${S.uid}`;
+// Everyone may fill out up to five brackets, each with its own name. Until they
+// pick one it's "<first name>'s Bracket" (then "… Bracket 2" and on), so the
+// standings show a little anonymity while the commissioner still sees who's who
+// (Chuck, 2026-10-26). Bracket 1 keeps the id it
+// always had, po26__<player>; the others are po26__<player>__2 and so on.
+const BK_MAX = 5;
+const bkSlotOf = b => (b && b.slot) || 1;
+const bkDocId = (pid, slot) => `${BK_ID}__${pid}` + (slot > 1 ? `__${slot}` : "");
+const bkVoteId = (uid, slot) => uid + (slot > 1 ? `__${slot}` : "");
+const bkFirst = n => String(n || "").trim().split(/\s+/)[0] || "My";
+const bkDefaultNick = (name, slot) => `${bkFirst(name)}\u2019s Bracket${slot > 1 ? " " + slot : ""}`;
+const bkNickOf = b => (b && b.nick) || bkDefaultNick(b && b.name, bkSlotOf(b));
+const bkMineAll = () => S.me ? S.brackets.filter(b => b.playerId === S.me.id).sort((a, b) => bkSlotOf(a) - bkSlotOf(b)) : [];
+const bkMine = () => S.me ? S.brackets.find(b => b.playerId === S.me.id && bkSlotOf(b) === S.bkSlot) : null;
+const bkStoreKey = (slot = S.bkSlot) => `bk-${BK_ID}-${S.uid}-${slot}`;
 function bkSyncDraft() {
-  if (!S.me || S.bkDraftFor === S.me.id) return;
-  S.bkDraftFor = S.me.id;
+  if (!S.me || S.bkDraftFor === `${S.me.id}:${S.bkSlot}`) return;
+  S.bkDraftFor = `${S.me.id}:${S.bkSlot}`;
   let kept = null;
   try { kept = JSON.parse(localStorage.getItem(bkStoreKey()) || "null"); } catch {}
-  S.bkDraft = bkSanitize({ ...((!bkLocked() && kept) || bkMine()?.picks || {}) });
+  if (kept && !kept.picks) kept = { picks: kept };          // an older draft: just the picks
+  const mine = bkMine();
+  S.bkDraft = bkSanitize({ ...((!bkLocked() && kept && kept.picks) || mine?.picks || {}) });
+  S.bkNick = (!bkLocked() && kept && kept.nick) || bkNickOf(mine || { slot: S.bkSlot, name: S.me.name });
 }
 function bkKeep() {
-  try { localStorage.setItem(bkStoreKey(), JSON.stringify(S.bkDraft || {})); } catch {}
+  try { localStorage.setItem(bkStoreKey(), JSON.stringify({ picks: S.bkDraft || {}, nick: S.bkNick })); } catch {}
 }
 function bkDirty() {
   if (!S.me || !S.bkDraft || bkLocked()) return false;
-  const saved = bkMine()?.picks || {}, d = S.bkDraft;
+  const mine = bkMine(), saved = mine?.picks || {}, d = S.bkDraft;
+  if ((S.bkNick || "").trim() && S.bkNick.trim() !== bkNickOf(mine || { slot: S.bkSlot, name: S.me.name })) return true;
   const keys = new Set([...Object.keys(saved), ...Object.keys(d)]);
   for (const k of keys) if (saved[k] !== d[k]) return true;
   return false;
+}
+// Switch to another of your brackets, saving the one you're leaving first.
+function bkUseSlot(slot) {
+  if (slot === S.bkSlot) return;
+  if (bkDirty()) bkSaveNow().catch(err => console.warn("save:", err));
+  S.bkSlot = slot; S.bkDraftFor = null; S.bkDraft = null; S.bkSeen = null; S.bkWho = null;
+  bkSyncDraft();
+  render();
+}
+// Saves the bracket on screen; everything it needs is taken up front, so
+// switching brackets mid-save can't mix two of them up.
+async function bkSaveNow() {
+  if (!S.me || bkLocked()) return;
+  const me = S.me, uid = S.uid, slot = S.bkSlot;
+  const picks = bkSanitize({ ...(S.bkDraft || {}) });
+  const nick = ((S.bkNick || "").trim() || bkDefaultNick(me.name, slot)).slice(0, 30);
+  // Past Thursday's lock, Thursday's games stay exactly as they were saved.
+  if (bkThuLocked()) {
+    const saved = bkMine()?.picks || {};
+    BK_THU.forEach(g => { if (saved[g]) picks[g] = saved[g]; else delete picks[g]; });
+    bkSanitize(picks);
+    if (S.bkSlot === slot) S.bkDraft = { ...picks };
+  }
+  await setDoc(doc(db, "brackets", bkDocId(me.id, slot)), {
+    bracketId: BK_ID, playerId: me.id, uid, name: me.name, slot, nick, picks, updatedAt: serverTimestamp()
+  });
+  try { localStorage.removeItem(bkStoreKey(slot)); } catch {}
+  bkVote(uid, slot, picks);
 }
 
 /* ---- The People's Bracket's data ----
@@ -2484,17 +2537,17 @@ function bkDirty() {
    bracket also keeps a copy of just its picks, under the account's id and with
    no name, in bracketVotes, which anyone may read. The commissioner's page fills
    in copies for brackets saved before this existed. */
-function bkVote(uid, picks) {
+function bkVote(uid, slot, picks) {
   if (!uid || bkLocked()) return;
-  setDoc(doc(db, "bracketVotes", uid), { bracketId: BK_ID, uid, picks: bkSanitize({ ...(picks || {}) }),
+  setDoc(doc(db, "bracketVotes", bkVoteId(uid, slot)), { bracketId: BK_ID, uid, slot, picks: bkSanitize({ ...(picks || {}) }),
     updatedAt: serverTimestamp() }).catch(err => console.warn("vote:", err));
 }
 function bkSyncVotes() {
   if (!S.isAdmin || bkLocked()) return;
   const key = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));
-  const have = new Map(S.bkVotes.map(v => [v.uid, key(v.picks || {})]));
+  const have = new Map(S.bkVotes.map(v => [v.id, key(v.picks || {})]));
   S.brackets.forEach(b => {
-    if (b.uid && have.get(b.uid) !== key(bkSanitize({ ...(b.picks || {}) }))) bkVote(b.uid, b.picks);
+    if (b.uid && have.get(bkVoteId(b.uid, bkSlotOf(b))) !== key(bkSanitize({ ...(b.picks || {}) }))) bkVote(b.uid, bkSlotOf(b), b.picks);
   });
 }
 
@@ -2601,8 +2654,20 @@ function renderBracket() {
   const mode = viewing ? "view" : S.me && (!locked || mine) ? "mine" : "actual";
   const picks = viewing ? viewing.picks || {} : mode === "mine" ? (locked ? mine?.picks || {} : S.bkDraft || {}) : {};
 
+  // Your brackets, the one on screen first among them, and its name.
+  const minesaved = bkMineAll().map(bkSlotOf);
+  const slots = [...new Set([...minesaved, S.bkSlot, ...(S.bkNewSlot ? [S.bkNewSlot] : [])])].sort((a, b) => a - b);
+  const showMine = S.me && !viewing && (!locked || minesaved.length);
+  $("#bk-mine").innerHTML = showMine ? `<div class="bk-classes">${slots.map(k => {
+      const b = S.brackets.find(x => x.playerId === S.me.id && bkSlotOf(x) === k);
+      const name = k === S.bkSlot && S.bkNick ? S.bkNick : bkNickOf(b || { slot: k, name: S.me.name });
+      return `<button class="bk-chip" data-slot="${k}" aria-pressed="${k === S.bkSlot}">${esc(name)}</button>`;
+    }).join("")}${!locked && slots.length < BK_MAX ? `<button class="bk-chip bk-add" data-slot="new">+ New bracket</button>` : ""}</div>
+    ${!locked ? `<label class="bk-nickrow"><span>Bracket name</span>
+      <input id="bk-nick" maxlength="30" autocomplete="off" value="${esc(S.bkNick || bkDefaultNick(S.me.name, S.bkSlot))}"></label>` : ""}` : "";
+
   $("#bk-banner").innerHTML = viewing
-    ? `<div class="banner"><b>${esc(viewing.name)}&rsquo;s bracket.</b>
+    ? `<div class="banner"><b>${esc(bkNickOf(viewing))}</b>${S.isAdmin ? ` &middot; ${esc(viewing.name)}` : ""}
        <button class="linkish" id="bk-back" style="color:inherit;font-size:inherit">Back to ${S.me ? "mine" : "the results"}</button></div>`
     : !locked
       ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games lock Thu., Oct. 29 at 5:00 PM."}
@@ -2703,7 +2768,7 @@ function renderBracketBoard() {
         ch.state ? `<i>${ch.state === "hit" ? "&#10003;" : "&#10005;"}</i>` : ""}</span>`
     : `<span class="bk-champ none" title="${esc(bkTab(ch.c))}">&ndash;</span>`).join("")}</div></td>`;
   el.innerHTML = rows.length ? `<table class="bk-lb">
-    <thead><tr><th class="rank">Rank</th><th>${cls === "All" ? "Champs" : "Champ"}</th><th>Player</th>
+    <thead><tr><th class="rank">Rank</th><th>${cls === "All" ? "Champs" : "Champ"}</th><th>Bracket</th>
       ${head("pts", "Pts")}<th class="num">Pct</th>
       ${head("r4", "State")}${head("r3", "Sub")}${head("r2", "Sec")}${head("r1", "Reg")}${head("r0", "Wk 9")}
       ${locked ? "" : `<th class="num">Picked</th>`}</tr></thead>
@@ -2712,7 +2777,8 @@ function renderBracketBoard() {
       const pct = N > 1 ? (below(x) / (N - 1) * 100).toFixed(1) : "100.0";
       return `<tr class="${rank === 1 && x.pts > 0 ? "leader" : ""}">
         <td class="rank">${rank}</td>${champCell(x)}
-        <td><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none">${esc(x.b.name)}</button>${me ? '<span class="you-chip">you</span>' : ""}</td>
+        <td><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none"><b>${esc(bkNickOf(x.b))}</b></button>
+          ${S.isAdmin ? `<span class="bk-owner">${esc(x.b.name)}</span>` : ""}${me ? '<span class="you-chip">you</span>' : ""}</td>
         <td class="num"><b>${x.pts}</b></td><td class="num">${pct}</td>
         ${[4, 3, 2, 1, 0].map(r => `<td class="num">${x.rounds[r]}</td>`).join("")}
         ${locked ? "" : `<td class="num">${x.n}<span style="color:var(--muted)">/${cls === "All" ? BK_PICKABLE : 31 - BK_FIELD[cls].filter(v => !v).length}</span></td>`}</tr>`;
@@ -2723,6 +2789,17 @@ function renderBracketBoard() {
 $("#view-bracket").addEventListener("click", e => {
   const chip = e.target.closest("[data-bkc]");
   if (chip) { S.bkClass = chip.dataset.bkc; render(); return; }
+  const slotBtn = e.target.closest("[data-slot]");
+  if (slotBtn) {
+    if (!S.me) { openGate(); return; }
+    if (slotBtn.dataset.slot === "new") {
+      const used = [...new Set([...bkMineAll().map(bkSlotOf), S.bkSlot])];
+      const next = [1, 2, 3, 4, 5].find(k => !used.includes(k));
+      if (!next) return;
+      S.bkNewSlot = next; bkUseSlot(next);
+    } else bkUseSlot(+slotBtn.dataset.slot);
+    return;
+  }
   const step = e.target.closest("[data-step]");
   if (step) { S.bkRound = +step.dataset.step; render(); bkTop(); return; }
   const nc = e.target.closest("[data-nextc]");
@@ -2765,24 +2842,23 @@ function bkAutoSave() {
   bkSaveTimer = setTimeout(() => { if (S.me && !bkLocked() && bkDirty()) $("#bk-save").click(); }, 1500);
 }
 
+$("#view-bracket").addEventListener("input", e => {
+  if (e.target.id !== "bk-nick") return;
+  S.bkNick = e.target.value.slice(0, 30);
+  bkKeep();
+  const chip = $(`#bk-mine [data-slot="${S.bkSlot}"]`);
+  if (chip) chip.textContent = S.bkNick.trim() || bkDefaultNick(S.me.name, S.bkSlot);
+  delete $("#bk-status").dataset.sticky;
+  bkAutoSave();
+});
+
 $("#bk-save").addEventListener("click", async () => {
   if (!S.me) { openGate(); return; }
   const st = $("#bk-status"), btn = $("#bk-save");
   if (bkLocked()) { st.className = "status err"; st.textContent = "Too late — brackets are locked."; return; }
   btn.disabled = true; st.className = "status"; st.textContent = "Saving…";
-  // Past Thursday's lock, Thursday's games stay exactly as they were saved.
-  if (bkThuLocked()) {
-    const saved = bkMine()?.picks || {};
-    BK_THU.forEach(g => { if (saved[g]) S.bkDraft[g] = saved[g]; else delete S.bkDraft[g]; });
-    bkSanitize(S.bkDraft);
-  }
   try {
-    await setDoc(doc(db, "brackets", `${BK_ID}__${S.me.id}`), {
-      bracketId: BK_ID, playerId: S.me.id, uid: S.uid, name: S.me.name,
-      picks: bkSanitize({ ...(S.bkDraft || {}) }), updatedAt: serverTimestamp()
-    });
-    try { localStorage.removeItem(bkStoreKey()); } catch {}
-    bkVote(S.uid, S.bkDraft);
+    await bkSaveNow();
     st.dataset.sticky = "1"; st.className = "status ok"; st.textContent = "Bracket saved.";
   } catch (err) {
     st.dataset.sticky = "1"; st.className = "status err"; st.textContent = friendlyError(err);

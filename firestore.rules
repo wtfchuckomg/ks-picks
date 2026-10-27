@@ -91,7 +91,13 @@ service cloud.firestore {
         return signedIn()
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.bracketId == 'po26'
+          // Bracket 1 is po26__<player>; a player's 2nd to 5th are po26__<player>__2 … __5.
+          && request.resource.data.slot is int
+          && request.resource.data.slot >= 1 && request.resource.data.slot <= 5
           && id == 'po26__' + request.resource.data.playerId
+                   + (request.resource.data.slot == 1 ? '' : '__' + string(request.resource.data.slot))
+          && request.resource.data.nick is string
+          && request.resource.data.nick.size() <= 30
           && request.resource.data.picks is map
           && request.resource.data.picks.size() <= 300
           && request.resource.data.name is string
@@ -120,13 +126,14 @@ service cloud.firestore {
     }
 
     // Each bracket's picks with no name on them, for the People's Bracket,
-    // which everyone can see. Filed under the account's id; only that account
+    // which everyone can see. Filed under the account's id (and __2 … __5 for
+    // a player's other brackets); only that account
     // (or the commissioner) writes it, and only until the Friday lock.
-    match /bracketVotes/{uid} {
+    match /bracketVotes/{vid} {
       allow read: if true;
       allow create, update: if isAdmin()
         || (signedIn()
-            && uid == request.auth.uid
+            && (vid == request.auth.uid || vid.matches(request.auth.uid + '__[2-5]'))
             && request.resource.data.uid == request.auth.uid
             && request.resource.data.bracketId == 'po26'
             && request.resource.data.picks is map
