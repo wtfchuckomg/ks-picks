@@ -288,7 +288,7 @@ table.bk-lb td,table.bk-lb th{white-space:nowrap}
 .bk-add{color:var(--g-blue,#0071E3)}
 .bk-nickrow{display:flex;align-items:center;gap:8px;margin:-4px 0 14px;font-size:12px;font-weight:600;color:var(--muted)}
 .bk-nickrow input{width:220px;max-width:60vw;font-size:14px;padding:6px 10px}
-.bk-owner{margin-left:6px;font-size:12px;color:var(--muted)}
+.bk-owner{margin-left:6px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .bk-day{flex:0 0 auto;margin-left:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .you-chip{font-size:9px;text-transform:uppercase;font-weight:700;background:var(--ink);
   color:var(--ground);padding:1px 5px;margin-left:5px;letter-spacing:.03em}
@@ -2475,9 +2475,16 @@ const BK_MAX = 5;
 const bkSlotOf = b => (b && b.slot) || 1;
 const bkDocId = (pid, slot) => `${BK_ID}__${pid}` + (slot > 1 ? `__${slot}` : "");
 const bkVoteId = (uid, slot) => uid + (slot > 1 ? `__${slot}` : "");
-const bkFirst = n => String(n || "").trim().split(/\s+/)[0] || "My";
+// A name that's really an email ("ANTHONYAJ@YAHOO.COM") becomes "Anthonyaj".
+const bkFirst = n => {
+  let w = String(n || "").trim().split(/\s+/)[0] || "";
+  if (w.includes("@")) w = (w.split("@")[0].match(/^[a-z]+/i) || [""])[0];
+  if (w && (w === w.toUpperCase() || w === w.toLowerCase())) w = w[0].toUpperCase() + w.slice(1).toLowerCase();
+  return w || "My";
+};
 const bkDefaultNick = (name, slot) => `${bkFirst(name)}\u2019s Bracket${slot > 1 ? " " + slot : ""}`;
-const bkNickOf = b => (b && b.nick) || bkDefaultNick(b && b.name, bkSlotOf(b));
+const bkCleanNick = n => n && !String(n).includes("@") ? n : "";
+const bkNickOf = b => bkCleanNick(b && b.nick) || bkDefaultNick(b && b.name, bkSlotOf(b));
 const bkMineAll = () => S.me ? S.brackets.filter(b => b.playerId === S.me.id).sort((a, b) => bkSlotOf(a) - bkSlotOf(b)) : [];
 const bkMine = () => S.me ? S.brackets.find(b => b.playerId === S.me.id && bkSlotOf(b) === S.bkSlot) : null;
 const bkStoreKey = (slot = S.bkSlot) => `bk-${BK_ID}-${S.uid}-${slot}`;
@@ -2489,7 +2496,7 @@ function bkSyncDraft() {
   if (kept && !kept.picks) kept = { picks: kept };          // an older draft: just the picks
   const mine = bkMine();
   S.bkDraft = bkSanitize({ ...((!bkLocked() && kept && kept.picks) || mine?.picks || {}) });
-  S.bkNick = (!bkLocked() && kept && kept.nick) || bkNickOf(mine || { slot: S.bkSlot, name: S.me.name });
+  S.bkNick = (!bkLocked() && kept && bkCleanNick(kept.nick)) || bkNickOf(mine || { slot: S.bkSlot, name: S.me.name });
 }
 function bkKeep() {
   try { localStorage.setItem(bkStoreKey(), JSON.stringify({ picks: S.bkDraft || {}, nick: S.bkNick })); } catch {}
@@ -2667,7 +2674,8 @@ function renderBracket() {
       <input id="bk-nick" maxlength="30" autocomplete="off" value="${esc(S.bkNick || bkDefaultNick(S.me.name, S.bkSlot))}"></label>` : ""}` : "";
 
   $("#bk-banner").innerHTML = viewing
-    ? `<div class="banner"><b>${esc(bkNickOf(viewing))}</b>${S.isAdmin ? ` &middot; ${esc(viewing.name)}` : ""}
+    ? `<div class="banner"><b>${esc(bkNickOf(viewing))}</b>${S.isAdmin ? ` <span class="bk-owner">${esc(viewing.name)}</span>
+       <button class="linkish" id="bk-rename" style="color:inherit;font-size:inherit">Rename</button>` : ""}
        <button class="linkish" id="bk-back" style="color:inherit;font-size:inherit">Back to ${S.me ? "mine" : "the results"}</button></div>`
     : !locked
       ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games lock Thu., Oct. 29 at 5:00 PM."}
@@ -2789,6 +2797,13 @@ function renderBracketBoard() {
 $("#view-bracket").addEventListener("click", e => {
   const chip = e.target.closest("[data-bkc]");
   if (chip) { S.bkClass = chip.dataset.bkc; render(); return; }
+  if (e.target.closest("#bk-rename")) {
+    const b = S.brackets.find(x => x.id === S.bkWho);
+    const nick = b && (prompt("Bracket name", bkNickOf(b)) || "").trim().slice(0, 30);
+    if (nick) updateDoc(doc(db, "brackets", b.id), { nick })
+      .then(() => { b.nick = nick; render(); }).catch(err => alert("Didn't save: " + err.message));
+    return;
+  }
   const slotBtn = e.target.closest("[data-slot]");
   if (slotBtn) {
     if (!S.me) { openGate(); return; }
