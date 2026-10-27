@@ -2614,7 +2614,7 @@ function bkClassHtml(c, picks, mode) {
   const tag = (r, i) => (r === 0 && (i === 0 || i === 8)) || r === 3
     ? `<span class="bk-sidetag">${(r === 0 ? i === 8 : i === 1) ? "West" : "East"}</span>` : "";
   return `<div class="bk-scroll"><div class="bk-cols">${[0, 1, 2, 3, 4].map(r =>
-    `<div class="bk-col"><div class="bk-rh">${BK_ROUND[r]} · ${BK_PTS[r]}</div>
+    `<div class="bk-col"><div class="bk-rh">${BK_ROUND[r]}</div>
       <div class="bk-list">${Array.from({ length: BK_GAMES[r] }, (_, i) => {
         const t = tag(r, i);
         return `<div class="bk-slot${t ? " tagged" : ""}">${t}${bkGameHtml(c, r, i, picks, mode, ctx)}</div>`;
