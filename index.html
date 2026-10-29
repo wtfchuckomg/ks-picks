@@ -535,6 +535,21 @@ label.f{color:var(--muted);font-weight:600}
   box-shadow:var(--g-edge),0 22px 60px rgba(24,32,90,.26),0 2px 8px rgba(24,32,90,.08)}
 .gate-close:hover{color:#FFFFFF;opacity:.85}
 .sep::before,.sep::after{background:var(--line)}
+
+/* ---------- the commissioner's section tabs: the same glass bar and capsule as the menu above ---------- */
+.adm-tabs{display:flex;gap:0;margin:0 0 16px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;
+  border:1px solid transparent;border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.50),rgba(255,255,255,.32)) padding-box,var(--g-rim) border-box;
+  -webkit-backdrop-filter:blur(24px) saturate(2);backdrop-filter:blur(24px) saturate(2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.55),0 8px 26px rgba(24,32,90,.10)}
+.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tab{position:relative;isolation:isolate;flex:0 0 auto;border:0;background:none;cursor:pointer;
+  font-family:var(--g-sans);font-size:14px;font-weight:400;letter-spacing:-.01em;color:var(--ink);opacity:.85;padding:11px 14px}
+.adm-tab:hover{opacity:1}
+.adm-tab[aria-pressed="true"]{font-weight:600;opacity:1}
+.adm-tab[aria-pressed="true"]::before{content:"";position:absolute;inset:5px 2px;z-index:-1;border-radius:980px;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 0 1px rgba(255,255,255,.6),0 3px 10px rgba(24,32,90,.12)}
 </style>
 </head>
 <body>
@@ -676,7 +691,7 @@ label.f{color:var(--muted);font-weight:600}
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
-      <div class="bk-classes" id="adm-tabs"><button class="bk-chip" data-at="bracket">Bracket results</button><button class="bk-chip" data-at="picks">Everyone&rsquo;s picks</button><button class="bk-chip" data-at="email">Tell everyone</button><button class="bk-chip" data-at="roster">Roster</button><button class="bk-chip" data-at="merge">Merge players</button><button class="bk-chip" data-at="results">Enter results</button><button class="bk-chip" data-at="week">Set up a week</button><button class="bk-chip" data-at="teams">Teams</button></div>
+      <div class="adm-tabs" id="adm-tabs"><button class="adm-tab" data-at="bracket">Bracket results</button><button class="adm-tab" data-at="picks">Everyone&rsquo;s picks</button><button class="adm-tab" data-at="email">Tell everyone</button><button class="adm-tab" data-at="roster">Roster</button><button class="adm-tab" data-at="merge">Merge players</button><button class="adm-tab" data-at="results">Enter results</button><button class="adm-tab" data-at="week">Set up a week</button><button class="adm-tab" data-at="teams">Teams</button></div>
 
       <div class="card" data-at="bracket">
         <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
