@@ -266,6 +266,9 @@ button.bk-t:hover{background:rgba(0,113,227,.07)}
 .bk-gnav{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
 .bk-done{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px;font-size:14px}
 table.bk-lb td,table.bk-lb th{white-space:nowrap}
+/* your own brackets stand out, since the names on the board are nicknames */
+table.bk-lb tbody tr.bk-me td{background:rgba(255,204,0,.30);font-weight:700}
+table.bk-lb tbody tr.bk-me td:first-child{box-shadow:inset 4px 0 0 #E0A800}
 .bk-champs{display:flex;gap:4px;align-items:center}
 .bk-name{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:760px){.bk-name{max-width:150px}}
@@ -2888,7 +2891,7 @@ function renderBracketBoard() {
     <tbody>${rows.map(x => {
       const me = S.me && x.b.playerId === S.me.id, rank = rankOf.get(x);
       const pct = N > 1 ? (below(x) / (N - 1) * 100).toFixed(1) : "100.0";
-      return `<tr class="${rank === 1 && x.pts > 0 ? "leader" : ""}">
+      return `<tr class="${rank === 1 && x.pts > 0 ? "leader" : ""}${me ? " bk-me" : ""}">
         <td class="rank">${rank}</td>${champCell(x)}
         <td><div class="bk-name"><button class="linkish bk-who" data-who="${esc(x.b.id)}" style="font-size:inherit;color:inherit;text-decoration:none"><b>${esc(bkNickOf(x.b))}</b></button>
           ${S.isAdmin ? `<span class="bk-owner">${esc(x.b.name)}</span>` : ""}${me ? '<span class="you-chip">you</span>' : ""}</div></td>
