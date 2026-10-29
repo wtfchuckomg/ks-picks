@@ -533,6 +533,108 @@ label.f{color:var(--muted);font-weight:600}
 .gate-close:hover{color:#FFFFFF;opacity:.85}
 .sep::before,.sep::after{background:var(--line)}
 </style>
+<style id="glass-v2">
+/* ==========================================================================================
+   Liquid Glass, v2 (Chuck, 2026-10-29: "make the site more liquid glass v2").
+   Closer to iOS 26: the controls float above the page as glass capsules, the current tab sits
+   under a lens that slides between tabs and squishes as it moves, light follows the pointer,
+   and controls swell a little when pressed. On desktop Chrome the floating glass also bends
+   what's behind it at the edges (html.lg-refract, set by the script at the end of the page).
+   Still below the header only. Phones skip the blur on the bracket boxes so scrolling stays smooth.
+   ========================================================================================== */
+:root{
+  --lg-spring:cubic-bezier(.34,1.56,.5,1);
+  --lg-rim-strong:linear-gradient(140deg,#FFFFFF,rgba(255,255,255,.55) 22%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.35) 78%,#FFFFFF);
+  --lg-float:0 10px 30px rgba(24,32,90,.18),0 1px 3px rgba(24,32,90,.10);
+}
+
+/* ---------- the tabs: a floating glass capsule instead of a full-width strip ---------- */
+nav.tabs{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
+  padding:10px 0 4px;pointer-events:none;overflow:visible}
+nav.tabs .tabs-inner{pointer-events:auto;position:relative;isolation:isolate;width:max-content;max-width:calc(100% - 28px);
+  margin:0 max(14px,calc((100% - 1100px) / 2 + 14px));padding:4px;gap:2px;overflow-x:auto;scrollbar-width:none;
+  border:1px solid transparent;border-radius:980px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.52),rgba(255,255,255,.30)) padding-box,var(--lg-rim-strong) border-box;
+  -webkit-backdrop-filter:blur(22px) saturate(2.1) brightness(1.06);backdrop-filter:blur(22px) saturate(2.1) brightness(1.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.5),inset 0 0 20px rgba(255,255,255,.35),var(--lg-float)}
+nav.tabs .tabs-inner::-webkit-scrollbar{display:none}
+nav.tabs .tab{padding:8px 16px;border-radius:980px;transition:transform .35s var(--lg-spring),opacity .2s}
+nav.tabs .tab:active{transform:scale(1.08)}
+/* the lens under the current tab (drawn by the script; the old capsule stays as the no-script fallback) */
+html.lg-js .tab[aria-current="page"]::before{display:none}
+.lg-lens{position:absolute;top:4px;bottom:4px;left:0;width:0;z-index:-1;border-radius:980px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.6));
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 -1px 1px rgba(255,255,255,.7),inset 0 0 0 1px rgba(255,255,255,.65),
+    inset 0 0 12px rgba(0,113,227,.10),0 4px 14px rgba(24,32,90,.16);
+  transition:left .5s var(--lg-spring),width .5s var(--lg-spring),transform .28s ease}
+.lg-lens.moving{transform:scaleX(1.10) scaleY(.88)}
+.lg-lens.still{transition:none}
+
+/* ---------- light that follows the pointer across the glass ---------- */
+.tabs-inner,.savebar,.bk-chip,.banner{--mx:30%;--my:0%}
+.tabs-inner::after,.savebar::after,.bk-chip::after,.bk-g::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(120px 80px at var(--mx) var(--my),rgba(255,255,255,.55),rgba(255,255,255,0) 70%)}
+.lg-lit::after{opacity:1}
+/* (the save bar is already sticky, which anchors its light; making it relative would unstick it) */
+.bk-chip,.bk-g{position:relative}
+.bk-g::after{z-index:1;background:radial-gradient(140px 90px at var(--mx) var(--my),rgba(255,255,255,.5),rgba(255,255,255,0) 70%)}
+
+/* ---------- class and bracket chips: glass capsules; the chosen one is tinted glass ---------- */
+.bk-chip{isolation:isolate;border:1px solid transparent;padding:8px 14px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34)) padding-box,var(--lg-rim-strong) border-box;
+  -webkit-backdrop-filter:blur(14px) saturate(1.9);backdrop-filter:blur(14px) saturate(1.9);
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 10px rgba(255,255,255,.35),0 3px 10px rgba(24,32,90,.10);
+  transition:transform .35s var(--lg-spring),box-shadow .2s}
+.bk-chip:active{transform:scale(1.08)}
+.bk-chip[aria-pressed="true"]{color:#fff;
+  background:linear-gradient(118deg,rgba(255,255,255,.45),rgba(255,255,255,0) 40%) padding-box,linear-gradient(180deg,rgba(64,156,255,.92),rgba(0,105,220,.92)) padding-box,linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.2) 45%,rgba(255,255,255,.6)) border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 6px rgba(0,40,120,.25),0 6px 16px rgba(0,113,227,.35);
+  animation:lg-pop .45s var(--lg-spring)}
+.bk-mine .bk-chip[aria-pressed="true"]{
+  background:linear-gradient(118deg,rgba(255,255,255,.3),rgba(255,255,255,0) 40%) padding-box,linear-gradient(180deg,rgba(60,60,66,.92),rgba(29,29,31,.92)) padding-box,linear-gradient(140deg,rgba(255,255,255,.8),rgba(255,255,255,.1) 45%,rgba(255,255,255,.45)) border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 16px rgba(24,32,90,.3)}
+@keyframes lg-pop{0%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+/* ---------- the bracket boxes: glass panes with a bright rim ---------- */
+.bk-g{border:1px solid transparent;border-radius:16px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,.62)) padding-box,var(--lg-rim-strong) border-box;
+  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 14px rgba(255,255,255,.4),0 6px 18px rgba(24,32,90,.10)}
+@media (hover:hover) and (min-width:761px){
+  .bk-g{background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.42)) padding-box,var(--lg-rim-strong) border-box;
+    -webkit-backdrop-filter:blur(16px) saturate(1.9);backdrop-filter:blur(16px) saturate(1.9)}
+}
+.bk-t + .bk-t{border-top-color:rgba(255,255,255,.75)}
+.bk-pv{border-top-color:rgba(255,255,255,.75)}
+button.bk-t{transition:background .2s}
+button.bk-t:hover{background:rgba(255,255,255,.45)}
+.bk-t.on{background:linear-gradient(180deg,rgba(0,122,255,.20),rgba(0,122,255,.12))}
+.bk-step{border:1px solid transparent;border-radius:14px;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34)) padding-box,var(--lg-rim-strong) border-box;
+  box-shadow:inset 0 1px 0 #FFFFFF,0 3px 10px rgba(24,32,90,.10)}
+.bk-step.cur{background:linear-gradient(180deg,rgba(64,156,255,.92),rgba(0,105,220,.92)) padding-box,linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.2) 45%,rgba(255,255,255,.6)) border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 16px rgba(0,113,227,.35)}
+
+/* ---------- the save bar: a capsule floating off the bottom edge ---------- */
+.savebar{isolation:isolate;bottom:12px;border-radius:28px;padding:10px 12px 10px 20px;
+  border-color:transparent;
+  background:var(--g-sheen) padding-box,linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.32)) padding-box,var(--lg-rim-strong) border-box;
+  -webkit-backdrop-filter:blur(22px) saturate(2.1) brightness(1.06);backdrop-filter:blur(22px) saturate(2.1) brightness(1.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 1px rgba(255,255,255,.5),inset 0 0 22px rgba(255,255,255,.35),0 14px 36px rgba(24,32,90,.22)}
+
+/* ---------- buttons swell when pressed, like iOS 26 controls ---------- */
+main .btn,.gate .btn{transition:transform .35s var(--lg-spring),filter .2s,background .2s}
+main .btn:active:not(:disabled),.gate .btn:active:not(:disabled){transform:scale(1.07)}
+
+/* ---------- desktop Chrome: the floating glass bends the page at its edges ---------- */
+html.lg-refract nav.tabs .tabs-inner,html.lg-refract .savebar{
+  -webkit-backdrop-filter:var(--lg-bend) blur(14px) saturate(2.1) brightness(1.06);backdrop-filter:var(--lg-bend) blur(14px) saturate(2.1) brightness(1.06)}
+
+@media (prefers-reduced-motion:reduce){
+  .lg-lens,nav.tabs .tab,.bk-chip,main .btn{transition:none!important}
+  .bk-chip[aria-pressed="true"]{animation:none}
+}
+</style>
 </head>
 <body>
 
@@ -3043,6 +3145,117 @@ function render() {
 
 
 applyHash();
+</script>
+<script>
+/* Liquid Glass v2: the sliding tab lens, the pointer light, and (desktop Chrome only) the edge bend.
+   Looks only; nothing here touches the picks. */
+(() => {
+  const root = document.documentElement;
+  root.classList.add("lg-js");
+
+  // The lens under the current tab. It slides to a new tab and squishes a little on the way.
+  const bar = document.querySelector("nav.tabs .tabs-inner");
+  if (bar) {
+    const lens = document.createElement("span");
+    lens.className = "lg-lens still";
+    bar.prepend(lens);
+    let last = null, t = 0;
+    const place = () => {
+      const cur = bar.querySelector('.tab[aria-current="page"]:not([hidden])');
+      if (!cur) { lens.style.width = "0"; return; }
+      lens.style.left = cur.offsetLeft + "px";
+      lens.style.width = cur.offsetWidth + "px";
+      if (last && last !== cur && !lens.classList.contains("still")) {
+        lens.classList.add("moving");
+        clearTimeout(t); t = setTimeout(() => lens.classList.remove("moving"), 260);
+      }
+      last = cur;
+    };
+    place();
+    requestAnimationFrame(() => requestAnimationFrame(() => lens.classList.remove("still")));
+    new MutationObserver(place).observe(bar, { subtree: true, attributes: true, attributeFilter: ["aria-current", "hidden"] });
+    addEventListener("resize", () => { lens.classList.add("still"); place(); requestAnimationFrame(() => lens.classList.remove("still")); });
+    document.fonts && document.fonts.ready.then(place);
+  }
+
+  // Light that follows the pointer over the glass.
+  if (matchMedia("(hover:hover)").matches) {
+    const GLASS = ".tabs-inner,.savebar,.bk-chip,.bk-g";
+    let lit = null;
+    document.addEventListener("pointermove", e => {
+      const el = e.target.closest && e.target.closest(GLASS);
+      if (lit && lit !== el) lit.classList.remove("lg-lit");
+      lit = el;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      el.style.setProperty("--my", (e.clientY - r.top) + "px");
+      el.classList.add("lg-lit");
+    }, { passive: true });
+    document.addEventListener("pointerleave", () => { if (lit) lit.classList.remove("lg-lit"); lit = null; });
+  }
+
+  // The edge bend: a displacement map per floating pane that pulls the page inward near its rim,
+  // the way a thick glass edge does. Only Chrome on a computer can draw it; everyone else keeps the blur.
+  const ua = navigator.userAgent;
+  if (!/Chrome\/\d/.test(ua) || /Mobile|Android/.test(ua) || !matchMedia("(hover:hover) and (min-width:761px)").matches) return;
+  root.classList.add("lg-refract");
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("width", "0"); svg.setAttribute("height", "0");
+  svg.setAttribute("aria-hidden", "true");
+  svg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+  document.body.appendChild(svg);
+  let n = 0;
+  const map = (w, h, rad) => {
+    // Half resolution is plenty; the image is stretched back to the pane.
+    const k = 0.5, W = Math.max(2, Math.round(w * k)), H = Math.max(2, Math.round(h * k));
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const ctx = c.getContext("2d"), img = ctx.createImageData(W, H), d = img.data;
+    const r = Math.min(rad, w / 2, h / 2), bezel = Math.min(22, h / 2);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const px = (x + .5) / k - w / 2, py = (y + .5) / k - h / 2;
+      const qx = Math.abs(px) - (w / 2 - r), qy = Math.abs(py) - (h / 2 - r);
+      const out = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+      const dist = -out;                                   // how far inside the edge
+      let nx = 0, ny = 0;
+      if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy) || 1; nx = qx / l * Math.sign(px); ny = qy / l * Math.sign(py); }
+      else if (qx > qy) nx = Math.sign(px); else ny = Math.sign(py);
+      const t = dist >= bezel ? 0 : Math.pow(1 - Math.max(dist, 0) / bezel, 2);
+      const i = (y * W + x) * 4;
+      d[i] = 128 - nx * t * 127; d[i + 1] = 128 - ny * t * 127; d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return c.toDataURL();
+  };
+  const bend = el => {
+    const id = el.dataset.lgBend || (el.dataset.lgBend = "lgb" + (++n));
+    let f = svg.querySelector("#" + id);
+    const draw = () => {
+      const w = el.offsetWidth, h = el.offsetHeight;
+      if (!w || !h) return;
+      if (el._lgSize === w + "x" + h) return;
+      el._lgSize = w + "x" + h;
+      const rad = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+      if (!f) {
+        f = document.createElementNS(NS, "filter"); f.id = id;
+        f.setAttribute("color-interpolation-filters", "sRGB");
+        f.setAttribute("filterUnits", "userSpaceOnUse"); f.setAttribute("primitiveUnits", "userSpaceOnUse");
+        f.innerHTML = `<feImage result="m" preserveAspectRatio="none"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/>`;
+        svg.appendChild(f);
+      }
+      for (const [a, v] of [["x", 0], ["y", 0], ["width", w], ["height", h]]) f.setAttribute(a, v);
+      const im = f.querySelector("feImage");
+      for (const [a, v] of [["x", 0], ["y", 0], ["width", w], ["height", h]]) im.setAttribute(a, v);
+      im.setAttribute("href", map(w, h, rad));
+      el.style.setProperty("--lg-bend", `url(#${id})`);
+    };
+    let q = 0;
+    new ResizeObserver(() => { cancelAnimationFrame(q); q = requestAnimationFrame(draw); }).observe(el);
+    draw();
+  };
+  document.querySelectorAll("nav.tabs .tabs-inner, .savebar").forEach(bend);
+})();
 </script>
 </body>
 </html>
