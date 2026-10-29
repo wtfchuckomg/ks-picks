@@ -100,7 +100,7 @@ nav.tabs{background:var(--nav);border-bottom:1px solid var(--nav-line);
 .tab[aria-current="page"]{color:var(--nav-ink);border-bottom-color:var(--accent)}
 
 main{max-width:1100px;margin:0 auto;padding:20px 18px 80px}
-.view[hidden]{display:none!important}
+.view[hidden],.card[hidden]{display:none!important}
 
 /* ---------- section headings (rule, not rail) ---------- */
 .card{background:none;border:0;border-radius:0}
@@ -775,7 +775,8 @@ html.lg-refract nav.tabs .tabs-inner,html.lg-refract .savebar{
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
-      <div class="card">
+      <!-- Hidden during the playoffs (2026-10-29): it's all bracket now. Remove "hidden" to bring it back. -->
+      <div class="card" hidden>
         <div class="card-hd">
           <h2>Set up a week</h2>
           <select id="adm-week-sel" style="width:auto;margin-left:auto"></select>
@@ -839,7 +840,8 @@ html.lg-refract nav.tabs .tabs-inner,html.lg-refract .savebar{
         </div>
       </div>
 
-      <div class="card">
+      <!-- Hidden (2026-10-29): the site uses the stats-site logos now, so the logo library isn't needed. -->
+      <div class="card" hidden>
         <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that. Use <b>Also known as</b> for the short names you actually type, like SM North.</span></div>
         <div class="card-bd">
           <div class="row" style="margin-bottom:12px">
@@ -870,7 +872,7 @@ html.lg-refract nav.tabs .tabs-inner,html.lg-refract .savebar{
       </div>
 
       <div class="card">
-        <div class="card-hd"><h2>Roster</h2><span class="hint">Put each player&rsquo;s Google address here and their existing record &mdash; picks, standings, everything &mdash; is theirs the moment they sign in. Emails are visible only to you.</span></div>
+        <div class="card-hd"><h2>Roster</h2></div>
         <div class="card-bd twrap" id="adm-roster"></div>
       </div>
     </section>
@@ -1687,11 +1689,9 @@ function renderAdminRoster() {
   if (key === rosterKey) return;
   rosterKey = key;
   $("#adm-roster").innerHTML = S.players.length ? `<table>
-    <thead><tr><th>Player</th><th>Email</th><th>Device</th><th></th></tr></thead>
+    <thead><tr><th>Player</th><th>Device</th><th></th></tr></thead>
     <tbody>${S.players.map(p => `<tr>
       <td>${esc(p.name)}</td>
-      <td><input data-pid="${esc(p.id)}" data-pk="email" value="${esc(p.email || "")}"
-        placeholder="their@gmail.com" autocomplete="off" style="min-width:180px"></td>
       <td><span class="pill ${p.uid ? "open" : "draft"}">${p.uid ? "claimed" : "unclaimed"}</span></td>
       <td style="text-align:right">
         <button class="btn ghost sm" data-reset="${esc(p.id)}">Reset</button>
@@ -1867,7 +1867,7 @@ function renderMail() {
   $("#mail-status").textContent =
     `${withMail.length} player${withMail.length === 1 ? "" : "s"} with an address on file` +
     (S.players.length > withMail.length
-      ? ` · ${S.players.length - withMail.length} without one, add it in the Roster` : "");
+      ? ` · ${S.players.length - withMail.length} without one` : "");
   $("#mail-status").className = "status";
 }
 
