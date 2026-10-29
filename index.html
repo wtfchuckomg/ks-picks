@@ -536,20 +536,10 @@ label.f{color:var(--muted);font-weight:600}
 .gate-close:hover{color:#FFFFFF;opacity:.85}
 .sep::before,.sep::after{background:var(--line)}
 
-/* ---------- the commissioner's section tabs: the same glass bar and capsule as the menu above ---------- */
-.adm-tabs{display:flex;gap:0;margin:0 0 16px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;
-  border:1px solid transparent;border-radius:16px;
-  background:linear-gradient(180deg,rgba(255,255,255,.50),rgba(255,255,255,.32)) padding-box,var(--g-rim) border-box;
-  -webkit-backdrop-filter:blur(24px) saturate(2);backdrop-filter:blur(24px) saturate(2);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.55),0 8px 26px rgba(24,32,90,.10)}
-.adm-tabs::-webkit-scrollbar{display:none}
-.adm-tab{position:relative;isolation:isolate;flex:0 0 auto;border:0;background:none;cursor:pointer;
-  font-family:var(--g-sans);font-size:14px;font-weight:400;letter-spacing:-.01em;color:var(--ink);opacity:.85;padding:11px 14px}
-.adm-tab:hover{opacity:1}
-.adm-tab[aria-pressed="true"]{font-weight:600;opacity:1}
-.adm-tab[aria-pressed="true"]::before{content:"";position:absolute;inset:5px 2px;z-index:-1;border-radius:980px;
-  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));
-  box-shadow:inset 0 1px 0 #FFFFFF,inset 0 0 0 1px rgba(255,255,255,.6),0 3px 10px rgba(24,32,90,.12)}
+/* ---------- the commissioner's section tabs: a second strip of the menu bar, right under it ---------- */
+nav.adm-subnav{position:static;z-index:39;border-top:0}
+nav.adm-subnav[hidden]{display:none}
+nav.adm-subnav .tab{cursor:pointer;font:inherit;font-family:var(--g-sans);font-size:14px}
 </style>
 </head>
 <body>
@@ -612,6 +602,16 @@ label.f{color:var(--muted);font-weight:600}
     <a class="tab" href="#community" data-view="community">Community</a>
     <a class="tab" href="#my-results" data-view="mine">My Results</a>
     <a class="tab" href="#commissioner" data-view="admin" id="tab-admin" hidden>Commissioner</a>
+  </div></nav>
+  <nav class="tabs adm-subnav" id="adm-tabs" aria-label="Commissioner sections" hidden><div class="tabs-inner">
+    <button class="tab" data-at="bracket">Bracket results</button>
+    <button class="tab" data-at="picks">Everyone&rsquo;s picks</button>
+    <button class="tab" data-at="email">Tell everyone</button>
+    <button class="tab" data-at="roster">Roster</button>
+    <button class="tab" data-at="merge">Merge players</button>
+    <button class="tab" data-at="results">Enter results</button>
+    <button class="tab" data-at="week">Set up a week</button>
+    <button class="tab" data-at="teams">Teams</button>
   </div></nav>
 
   <main>
@@ -691,7 +691,6 @@ label.f{color:var(--muted);font-weight:600}
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
-      <div class="adm-tabs" id="adm-tabs"><button class="adm-tab" data-at="bracket">Bracket results</button><button class="adm-tab" data-at="picks">Everyone&rsquo;s picks</button><button class="adm-tab" data-at="email">Tell everyone</button><button class="adm-tab" data-at="roster">Roster</button><button class="adm-tab" data-at="merge">Merge players</button><button class="adm-tab" data-at="results">Enter results</button><button class="adm-tab" data-at="week">Set up a week</button><button class="adm-tab" data-at="teams">Teams</button></div>
 
       <div class="card" data-at="bracket">
         <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
@@ -1621,7 +1620,7 @@ try { admTab = localStorage.getItem("adm-tab") || admTab; } catch {}
 function admShowTab() {
   if (!document.querySelector(`#view-admin .card[data-at="${admTab}"]`)) admTab = "bracket";
   document.querySelectorAll("#view-admin .card[data-at]").forEach(c => { c.hidden = c.dataset.at !== admTab; });
-  document.querySelectorAll("#adm-tabs [data-at]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.at === admTab)));
+  document.querySelectorAll("#adm-tabs [data-at]").forEach(b => b.dataset.at === admTab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
 }
 $("#adm-tabs").addEventListener("click", e => {
   const b = e.target.closest("[data-at]"); if (!b) return;
@@ -3057,8 +3056,9 @@ function render() {
   $('.tab[data-view="mine"]').hidden = !S.me;
   if (!S.isAdmin && S.view === "admin") S.view = "picks";
   if (!S.me && S.view === "mine") S.view = "picks";
+  $("#adm-tabs").hidden = !(S.isAdmin && S.view === "admin");
 
-  $$(".tab").forEach(t => {
+  $$(".tab[data-view]").forEach(t => {
     if (t.dataset.view === S.view) t.setAttribute("aria-current", "page");
     else t.removeAttribute("aria-current");
   });
