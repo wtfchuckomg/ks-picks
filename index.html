@@ -2392,11 +2392,11 @@ const BK_FORFEIT = { "6M_0_14": "Brewster", "3A_0_8": "Larned", "1A_0_8": "Syrac
 const bkByeText = g => BK_FORFEIT[g] ? `${esc(BK_FORFEIT[g])} &middot; forfeit` : "Bye";
 // Each game locks at 5:00 PM on the day it's played (Chuck, 2026-10-26): week 9's
 // Thursday games at 5 PM Thursday the 29th, everything else at 5 PM Friday the 30th.
-// Thursday's games are the stats site's list (BK_THURSDAY in pb/35-bracket.js).
+// Thursday's games are KPreps' week-9 "Thursday Games" list, checked 2026-10-29 (52 games; the stats site's list had 19).
 // firestore.rules has the same two moments and the same list; change them together.
 const BK_LOCK_THU = new Date("2026-10-29T22:00:00Z");
 const BK_LOCK = new Date("2026-10-30T22:00:00Z");
-const BK_THU = new Set(["6A_0_3", "6A_0_6", "5A_0_4", "5A_0_13", "2A_0_0", "2A_0_6", "8M-I_0_1", "8M-I_0_10", "8M-I_0_13", "8M-II_0_0", "8M-II_0_6", "8M-II_0_7", "8M-II_0_10", "8M-II_0_11", "8M-II_0_14", "6M_0_2", "6M_0_3", "6M_0_6", "6M_0_7"]);
+const BK_THU = new Set(["6A_0_3", "6A_0_4", "6A_0_6", "5A_0_4", "5A_0_13", "4A_0_12", "4A_0_13", "2A_0_0", "2A_0_2", "2A_0_4", "2A_0_6", "2A_0_12", "1A_0_2", "1A_0_6", "1A_0_10", "1A_0_12", "8M-I_0_0", "8M-I_0_2", "8M-I_0_3", "8M-I_0_4", "8M-I_0_5", "8M-I_0_6", "8M-I_0_7", "8M-I_0_8", "8M-I_0_9", "8M-I_0_10", "8M-I_0_11", "8M-I_0_12", "8M-I_0_13", "8M-I_0_14", "8M-I_0_15", "8M-II_0_0", "8M-II_0_1", "8M-II_0_2", "8M-II_0_4", "8M-II_0_5", "8M-II_0_6", "8M-II_0_7", "8M-II_0_8", "8M-II_0_9", "8M-II_0_10", "8M-II_0_11", "8M-II_0_12", "8M-II_0_13", "8M-II_0_14", "6M_0_2", "6M_0_3", "6M_0_6", "6M_0_7", "6M_0_10", "6M_0_11", "6M_0_15"]);
 const bkThuLocked = () => Date.now() >= BK_LOCK_THU.getTime();
 const bkGameLocked = g => Date.now() >= BK_LOCK.getTime() || (BK_THU.has(g) && bkThuLocked());
 const BK_CLASSES = ["6A", "5A", "4A", "3A", "2A", "1A", "8M-I", "8M-II", "6M"];
