@@ -676,14 +676,15 @@ label.f{color:var(--muted);font-weight:600}
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
-      <div class="card">
+      <div class="bk-classes" id="adm-tabs"><button class="bk-chip" data-at="bracket">Bracket results</button><button class="bk-chip" data-at="picks">Everyone&rsquo;s picks</button><button class="bk-chip" data-at="email">Tell everyone</button><button class="bk-chip" data-at="roster">Roster</button><button class="bk-chip" data-at="merge">Merge players</button><button class="bk-chip" data-at="results">Enter results</button><button class="bk-chip" data-at="week">Set up a week</button><button class="bk-chip" data-at="teams">Teams</button></div>
+
+      <div class="card" data-at="bracket">
         <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
           <select id="bk-adm-class" style="width:auto;margin-left:auto"></select></div>
         <div class="card-bd" id="bk-adm"></div>
       </div>
 
-      <!-- Hidden during the playoffs (2026-10-29): it's all bracket now. Remove "hidden" to bring it back. -->
-      <div class="card" hidden>
+      <div class="card" data-at="week">
         <div class="card-hd">
           <h2>Set up a week</h2>
           <select id="adm-week-sel" style="width:auto;margin-left:auto"></select>
@@ -706,8 +707,7 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <!-- Hidden for the playoffs (2026-10-29). -->
-      <div class="card" hidden>
+      <div class="card" data-at="results">
         <div class="card-hd"><h2>Enter results</h2><span class="hint">Tap a winner and it saves immediately &mdash; come back as more games finish. Standings update each time.</span></div>
         <div class="card-bd">
           <div id="adm-results"></div>
@@ -715,12 +715,12 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" data-at="picks">
         <div class="card-hd"><h2>Everyone&rsquo;s picks</h2><span class="hint">Commissioner only.</span></div>
         <div class="card-bd twrap" id="adm-grid"></div>
       </div>
 
-      <div class="card">
+      <div class="card" data-at="email">
         <div class="card-hd"><h2>Tell everyone</h2><span class="hint">Addresses go in BCC, so nobody sees anyone else&rsquo;s.</span></div>
         <div class="card-bd">
           <div class="row" style="margin-bottom:10px">
@@ -742,8 +742,7 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <!-- Hidden (2026-10-29): the site uses the stats-site logos now, so the logo library isn't needed. -->
-      <div class="card" hidden>
+      <div class="card" data-at="teams">
         <div class="card-hd"><h2>Teams</h2><span class="hint">Add a logo once &mdash; it shows up every week after that. Use <b>Also known as</b> for the short names you actually type, like SM North.</span></div>
         <div class="card-bd">
           <div class="row" style="margin-bottom:12px">
@@ -757,8 +756,7 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <!-- Hidden (2026-10-29): Chuck doesn't need the merge suggestions. -->
-      <div class="card" hidden>
+      <div class="card" data-at="merge">
         <div class="card-hd"><h2>Merge players</h2><span class="hint">One person, two records &mdash; usually one from before Google sign-in. The newer record is kept and the older one&rsquo;s weeks move onto it.</span></div>
         <div class="card-bd">
           <div id="merge-list"></div>
@@ -774,8 +772,7 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <!-- Hidden (2026-10-29): Chuck emails everyone through blasts now. -->
-      <div class="card" hidden>
+      <div class="card" data-at="roster">
         <div class="card-hd"><h2>Roster</h2></div>
         <div class="card-bd twrap" id="adm-roster"></div>
       </div>
@@ -1602,6 +1599,22 @@ function renderAdminRoster() {
         <button class="btn danger sm" data-del="${esc(p.id)}">Remove</button></td></tr>`).join("")}</tbody></table>`
     : '<div class="empty">Nobody has joined yet.</div>';
 }
+
+/* ---- commissioner: one section at a time, picked from the tabs (Chuck, 2026-10-29) ---- */
+let admTab = "bracket";
+try { admTab = localStorage.getItem("adm-tab") || admTab; } catch {}
+function admShowTab() {
+  if (!document.querySelector(`#view-admin .card[data-at="${admTab}"]`)) admTab = "bracket";
+  document.querySelectorAll("#view-admin .card[data-at]").forEach(c => { c.hidden = c.dataset.at !== admTab; });
+  document.querySelectorAll("#adm-tabs [data-at]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.at === admTab)));
+}
+$("#adm-tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-at]"); if (!b) return;
+  admTab = b.dataset.at;
+  try { localStorage.setItem("adm-tab", admTab); } catch {}
+  admShowTab();
+});
+admShowTab();
 
 /* ---- commissioner: form wiring ---- */
 $("#adm-week-sel").addEventListener("change", e => { S.admWeekId = e.target.value; renderAdmin(); });
