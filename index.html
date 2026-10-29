@@ -676,6 +676,12 @@ label.f{color:var(--muted);font-weight:600}
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
+      <div class="card">
+        <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
+          <select id="bk-adm-class" style="width:auto;margin-left:auto"></select></div>
+        <div class="card-bd" id="bk-adm"></div>
+      </div>
+
       <!-- Hidden during the playoffs (2026-10-29): it's all bracket now. Remove "hidden" to bring it back. -->
       <div class="card" hidden>
         <div class="card-hd">
@@ -700,7 +706,8 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <div class="card">
+      <!-- Hidden for the playoffs (2026-10-29). -->
+      <div class="card" hidden>
         <div class="card-hd"><h2>Enter results</h2><span class="hint">Tap a winner and it saves immediately &mdash; come back as more games finish. Standings update each time.</span></div>
         <div class="card-bd">
           <div id="adm-results"></div>
@@ -711,12 +718,6 @@ label.f{color:var(--muted);font-weight:600}
       <div class="card">
         <div class="card-hd"><h2>Everyone&rsquo;s picks</h2><span class="hint">Commissioner only.</span></div>
         <div class="card-bd twrap" id="adm-grid"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
-          <select id="bk-adm-class" style="width:auto;margin-left:auto"></select></div>
-        <div class="card-bd" id="bk-adm"></div>
       </div>
 
       <div class="card">
@@ -756,7 +757,8 @@ label.f{color:var(--muted);font-weight:600}
         </div>
       </div>
 
-      <div class="card">
+      <!-- Hidden (2026-10-29): Chuck doesn't need the merge suggestions. -->
+      <div class="card" hidden>
         <div class="card-hd"><h2>Merge players</h2><span class="hint">One person, two records &mdash; usually one from before Google sign-in. The newer record is kept and the older one&rsquo;s weeks move onto it.</span></div>
         <div class="card-bd">
           <div id="merge-list"></div>
