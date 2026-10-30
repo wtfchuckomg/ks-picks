@@ -2325,7 +2325,8 @@ const bkByeText = g => BK_FORFEIT[g] ? `${esc(BK_FORFEIT[g])} &middot; forfeit` 
 // Thursday games at 5 PM Thursday the 29th, everything else at 5 PM Friday the 30th.
 // Thursday's games are KPreps' week-9 "Thursday Games" list, checked 2026-10-29 (52 games; the stats site's list had 19).
 // firestore.rules has the same two moments and the same list; change them together.
-const BK_LOCK_THU = new Date("2026-10-29T22:00:00Z");
+// Reopened Fri 10/30 until 1:15 PM (Chuck: unlock the Thursday games for one hour); it was 5 PM Thu.
+const BK_LOCK_THU = new Date("2026-10-30T18:15:00Z");
 const BK_LOCK = new Date("2026-10-30T22:00:00Z");
 const BK_THU = new Set(["6A_0_3", "6A_0_4", "6A_0_6", "5A_0_4", "5A_0_13", "4A_0_12", "4A_0_13", "2A_0_0", "2A_0_2", "2A_0_4", "2A_0_6", "2A_0_12", "1A_0_2", "1A_0_6", "1A_0_10", "1A_0_12", "8M-I_0_0", "8M-I_0_2", "8M-I_0_3", "8M-I_0_4", "8M-I_0_5", "8M-I_0_6", "8M-I_0_7", "8M-I_0_8", "8M-I_0_9", "8M-I_0_10", "8M-I_0_11", "8M-I_0_12", "8M-I_0_13", "8M-I_0_14", "8M-I_0_15", "8M-II_0_0", "8M-II_0_1", "8M-II_0_2", "8M-II_0_4", "8M-II_0_5", "8M-II_0_6", "8M-II_0_7", "8M-II_0_8", "8M-II_0_9", "8M-II_0_10", "8M-II_0_11", "8M-II_0_12", "8M-II_0_13", "8M-II_0_14", "6M_0_2", "6M_0_3", "6M_0_6", "6M_0_7", "6M_0_10", "6M_0_11", "6M_0_15"]);
 const bkThuLocked = () => Date.now() >= BK_LOCK_THU.getTime();
@@ -2714,7 +2715,7 @@ function renderBracket() {
        <button class="linkish" id="bk-rename" style="color:inherit;font-size:inherit">Rename</button>` : ""}
        <button class="linkish" id="bk-back" style="color:inherit;font-size:inherit">Back to ${S.me ? "mine" : "the results"}</button></div>`
     : !locked
-      ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games lock Thu., Oct. 29 at 5:00 PM."}
+      ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games are open until 1:15 PM today."}
          Everything else locks Fri., Oct. 30 at 5:00 PM.</b>${S.me ? "" :
           ` <button class="linkish" id="bk-signin" style="color:inherit;font-size:inherit">Sign in</button> to fill one out.`}</div>`
       : "";
