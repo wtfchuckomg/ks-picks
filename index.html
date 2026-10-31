@@ -604,7 +604,6 @@ nav.adm-subnav .tab{cursor:pointer;font:inherit;font-family:var(--g-sans);font-s
     <a class="tab" href="#commissioner" data-view="admin" id="tab-admin" hidden>Commissioner</a>
   </div></nav>
   <nav class="tabs adm-subnav" id="adm-tabs" aria-label="Commissioner sections" hidden><div class="tabs-inner">
-    <button class="tab" data-at="bracket">Bracket results</button>
     <button class="tab" data-at="picks">Everyone&rsquo;s picks</button>
     <button class="tab" data-at="email">Tell everyone</button>
     <button class="tab" data-at="roster">Roster</button>
@@ -691,12 +690,6 @@ nav.adm-subnav .tab{cursor:pointer;font:inherit;font-family:var(--g-sans);font-s
 
     <!-- ---- ADMIN ---- -->
     <section class="view" id="view-admin" hidden>
-
-      <div class="card" data-at="bracket">
-        <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
-          <select id="bk-adm-class" style="width:auto;margin-left:auto"></select></div>
-        <div class="card-bd" id="bk-adm"></div>
-      </div>
 
       <div class="card" data-at="week">
         <div class="card-hd">
@@ -960,7 +953,7 @@ const S = {
   view: "picks", showGate: false,
   draft: {},                 // weekId -> {gameId: 'away'|'home'} unsaved
   admWeekId: null, admDraft: null,
-  brackets: [], bkVotes: [], bkMeta: {}, bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null, bkSlot: 1, bkNick: "", bkNewSlot: 0,
+  brackets: [], bkVotes: [], bkLoaded: false, bkClass: "6A", bkWho: null, bkDraft: null, bkDraftFor: null, bkSlot: 1, bkNick: "", bkNewSlot: 0,
   boardWeekId: null,
   ready: false
 };
@@ -1085,10 +1078,6 @@ function subscribe() {
     render();
   }, err => showFatal(err)));
 
-  unsubs.push(onSnapshot(doc(db, "bracketMeta", BK_ID), snap => {
-    S.bkMeta = snap.exists() ? snap.data() : {};
-    render();
-  }, err => console.warn("bracket results:", err)));
   // Each bracket's picks without a name, which anyone may read, for the People's Bracket.
   unsubs.push(onSnapshot(collection(db, "bracketVotes"), snap => {
     S.bkVotes = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(v => v.bracketId === BK_ID);
@@ -1592,7 +1581,6 @@ function renderAdmin() {
     : '<div class="empty">No cards submitted for this week yet.</div>';
 
   renderMail();
-  renderBracketAdmin();
   renderTeams();
   renderMerge();
   renderAdminRoster();
@@ -1615,10 +1603,10 @@ function renderAdminRoster() {
 }
 
 /* ---- commissioner: one section at a time, picked from the tabs (Chuck, 2026-10-29) ---- */
-let admTab = "bracket";
+let admTab = "picks";
 try { admTab = localStorage.getItem("adm-tab") || admTab; } catch {}
 function admShowTab() {
-  if (!document.querySelector(`#view-admin .card[data-at="${admTab}"]`)) admTab = "bracket";
+  if (!document.querySelector(`#view-admin .card[data-at="${admTab}"]`)) admTab = "picks";
   document.querySelectorAll("#view-admin .card[data-at]").forEach(c => { c.hidden = c.dataset.at !== admTab; });
   document.querySelectorAll("#adm-tabs [data-at]").forEach(b => b.dataset.at === admTab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
 }
@@ -2506,11 +2494,9 @@ function bkLiveDraw() {
     document.querySelectorAll(".bk-scroll").forEach((e, i) => { if (at[i]) e.scrollLeft = at[i]; });
   }, 3000);
 }
-// The real bracket: the commissioner's call first, then the final on file.
+// The real bracket: the finals from the stats site.
 function bkActual(c) {
-  const fix = (S.bkMeta && S.bkMeta.results) || {};
   return bkResolver(c, (g, a, b) => {
-    if (fix[g] === a || fix[g] === b) return fix[g];
     const w = BKR.idx.get([bkCanon(a), bkCanon(b)].sort().join("|"));
     return w === bkCanon(a) ? a : w === bkCanon(b) ? b : null;
   });
@@ -3039,37 +3025,6 @@ setInterval(() => {
 }, 5 * 60e3);
 
 /* ---- Commissioner: set or correct a result by hand ---- */
-function renderBracketAdmin() {
-  const sel = $("#bk-adm-class"), el = $("#bk-adm");
-  if (!sel || !el) return;
-  if (!sel.options.length) sel.innerHTML = BK_CLASSES.map(k => `<option value="${k}">${bkTab(k)}</option>`).join("");
-  if (Date.now() - BKR.at > 10 * 60e3 && !BKR.loading) bkLoadResults().then(() => { if (S.view === "admin") render(); });
-  const c = sel.value || "6A", fix = (S.bkMeta && S.bkMeta.results) || {};
-  const act = bkActual(c), out = [];
-  bkEach((r, i) => {
-    const [a, b, bye] = act.teams(r, i);
-    if (bye || !a || !b) return;
-    const g = bkGid(c, r, i), won = act.win(r, i), mine = fix[g];
-    // the final on file for this pair, whatever the bracket above it says
-    const found = BKR.idx.get([bkCanon(a), bkCanon(b)].sort().join("|"));
-    const auto = found === bkCanon(a) ? a : found === bkCanon(b) ? b : null;
-    out.push(`<div class="res-row" style="grid-template-columns:44px 1fr"><span class="n">${BK_SHORT[r]}</span>
-      <div class="res-opts">
-        <button class="res-opt" data-bkr="${esc(g)}" data-v="${esc(a)}" aria-pressed="${won === a}">${esc(a)}${auto === a && !mine ? " ✓" : ""}</button>
-        <button class="res-opt" data-bkr="${esc(g)}" data-v="${esc(b)}" aria-pressed="${won === b}">${esc(b)}${auto === b && !mine ? " ✓" : ""}</button>
-        <button class="res-opt clear" data-bkr="${esc(g)}" data-v="" aria-pressed="${!mine}">Auto</button>
-      </div></div>`);
-  });
-  el.innerHTML = out.length ? out.join("") : '<div class="empty">No games set yet.</div>';
-}
-$("#bk-adm-class").addEventListener("change", () => render());
-$("#bk-adm").addEventListener("click", async e => {
-  const b = e.target.closest("[data-bkr]"); if (!b) return;
-  const next = { ...((S.bkMeta && S.bkMeta.results) || {}) };
-  if (b.dataset.v) next[b.dataset.bkr] = b.dataset.v; else delete next[b.dataset.bkr];
-  try { await setDoc(doc(db, "bracketMeta", BK_ID), { results: next }); }
-  catch (err) { alert(friendlyError(err)); }
-});
 
 const bkLockState = () => `${bkThuLocked()}:${bkLocked()}`;
 let bkWasLocked = bkLockState();
