@@ -2858,7 +2858,8 @@ function renderBracketBoard() {
   const cls = ["All", ...BK_CLASSES].includes(S.bkBoardClass) ? S.bkBoardClass : "All";
   $("#bk-board-classes").innerHTML = ["All", ...BK_CLASSES].map(k =>
     `<button class="bk-chip" data-bbc="${k}" aria-pressed="${k === cls}">${k === "All" ? "All classes" : bkTab(k)}</button>`).join("");
-  const rows = bkBoardRows(cls);
+  // All classes is for finished brackets: a title-game pick in every class (Chuck, 2026-10-31).
+  const rows = bkBoardRows(cls).filter(x => cls !== "All" || BK_CLASSES.every(c => (x.b.picks || {})[bkGid(c, 4, 0)]));
   // Rank and percentile always go by points; the round columns only re-sort the list.
   const byPts = rows.slice().sort((x, y) => y.pts - x.pts);
   const rankOf = new Map(), N = rows.length;
