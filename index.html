@@ -694,7 +694,8 @@ nav.adm-subnav .tab{cursor:pointer;font:inherit;font-family:var(--g-sans);font-s
 
       <div class="card" data-at="bracket">
         <div class="card-hd"><h2>Bracket results</h2><span class="hint">Finals fill in on their own from the stats site; tap a team to set one by hand.</span>
-          <select id="bk-adm-class" style="width:auto;margin-left:auto"></select></div>
+          <button class="btn ghost sm" id="bk-unlock" style="margin-left:auto"></button>
+          <select id="bk-adm-class" style="width:auto"></select></div>
         <div class="card-bd" id="bk-adm"></div>
       </div>
 
@@ -1171,6 +1172,7 @@ function renderClock() {
   // (or there's no week), the clock counts down to the bracket's next lock —
   // Thursday's games, then Friday's.
   const weekOpen = w && !isLocked(w);
+  if (bkUnlocked()) { lab.textContent = "Picks"; val.textContent = "OPEN"; el.classList.remove("locked"); return; }
   const bkNext = !bkThuLocked() ? BK_LOCK_THU : !bkLocked() ? BK_LOCK : null;
   if (!w && !bkNext) { lab.textContent = "Status"; val.textContent = "—"; return; }
   const d = !weekOpen && bkNext ? bkNext : deadlineDate(w);
@@ -1453,7 +1455,7 @@ $("#view-board").addEventListener("click", e => {
   const so = e.target.closest("[data-sort]");
   if (so) { S.bkSort = so.dataset.sort; render(); return; }
   const who = e.target.closest("[data-who]");
-  if (who && (bkLocked() || S.isAdmin)) {
+  if (who && (bkPastLock() || S.isAdmin)) {
     const own = bkMineAll().find(b => b.id === who.dataset.who);
     if (own) { S.bkWho = null; bkUseSlot(bkSlotOf(own)); } else S.bkWho = who.dataset.who;
     location.hash = "#bracket"; window.scrollTo({ top: 0 });
@@ -2329,8 +2331,11 @@ const bkByeText = g => BK_FORFEIT[g] ? `${esc(BK_FORFEIT[g])} &middot; forfeit` 
 const BK_LOCK_THU = new Date("2026-10-30T18:15:00Z");
 const BK_LOCK = new Date("2026-10-30T22:00:00Z");
 const BK_THU = new Set(["6A_0_3", "6A_0_4", "6A_0_6", "5A_0_4", "5A_0_13", "4A_0_12", "4A_0_13", "2A_0_0", "2A_0_2", "2A_0_4", "2A_0_6", "2A_0_12", "1A_0_2", "1A_0_6", "1A_0_10", "1A_0_12", "8M-I_0_0", "8M-I_0_2", "8M-I_0_3", "8M-I_0_4", "8M-I_0_5", "8M-I_0_6", "8M-I_0_7", "8M-I_0_8", "8M-I_0_9", "8M-I_0_10", "8M-I_0_11", "8M-I_0_12", "8M-I_0_13", "8M-I_0_14", "8M-I_0_15", "8M-II_0_0", "8M-II_0_1", "8M-II_0_2", "8M-II_0_4", "8M-II_0_5", "8M-II_0_6", "8M-II_0_7", "8M-II_0_8", "8M-II_0_9", "8M-II_0_10", "8M-II_0_11", "8M-II_0_12", "8M-II_0_13", "8M-II_0_14", "6M_0_2", "6M_0_3", "6M_0_6", "6M_0_7", "6M_0_10", "6M_0_11", "6M_0_15"]);
-const bkThuLocked = () => Date.now() >= BK_LOCK_THU.getTime();
-const bkGameLocked = g => Date.now() >= BK_LOCK.getTime() || (BK_THU.has(g) && bkThuLocked());
+// The commissioner's Unlock switch opens every bracket until it's switched back (bracketMeta/po26.unlocked; the rules read it too).
+const bkUnlocked = () => S.bkMeta?.unlocked === true;
+const bkPastLock = () => Date.now() >= BK_LOCK.getTime();
+const bkThuLocked = () => Date.now() >= BK_LOCK_THU.getTime() && !bkUnlocked();
+const bkGameLocked = g => (bkPastLock() && !bkUnlocked()) || (BK_THU.has(g) && bkThuLocked());
 const BK_CLASSES = ["6A", "5A", "4A", "3A", "2A", "1A", "8M-I", "8M-II", "6M"];
 const bkTab = c => c === "8M-I" ? "8-Man I" : c === "8M-II" ? "8-Man II" : c === "6M" ? "6-Man" : c;
 const BK_ROUND = ["Week 9", "Regional", "Sectional", "Sub-State", "State"];
@@ -2338,7 +2343,7 @@ const BK_SHORT = ["Wk 9", "Reg", "Sec", "Sub", "State"];
 const BK_PTS = [1, 2, 4, 8, 16];
 const BK_STATS = "https://stats.kansasmediarankings.com/";
 const bkGid = (c, r, i) => `${c}_${r}_${i}`;
-const bkLocked = () => Date.now() >= BK_LOCK.getTime();
+const bkLocked = () => bkPastLock() && !bkUnlocked();
 const BK_INFO = Object.fromEntries(BK_CLASSES.map(c =>
   [c, new Map(BK_FIELD[c].filter(Boolean).map(([n, s, rec]) => [n, { seed: s, rec }]))]));
 // Games a player actually picks: every game but a week-9 bye.
@@ -2546,7 +2551,7 @@ function bkScore(picks) {
    makes the standings (and peeking at the leader's bracket) possible. */
 let bkUnsub = null, bkScope = null;
 function bkSubscribe() {
-  const scope = S.isAdmin || bkLocked() ? "all" : S.uid ? "mine:" + S.uid : "none";
+  const scope = S.isAdmin || bkPastLock() ? "all" : S.uid ? "mine:" + S.uid : "none";
   if (scope === bkScope) return;
   bkScope = scope;
   if (bkUnsub) { try { bkUnsub(); } catch {} bkUnsub = null; }
@@ -2681,7 +2686,7 @@ function bkGameHtml(c, r, i, picks, mode, ctx) {
     else if (mode === "actual") cls = decided ? (w === t ? "win" : "gone") : "";
     else if (picks[g] === t && ctx.mine.win(r, i) === t) {
       cls = decided ? (w === t ? "hit" : "miss") : ctx.out.has(t) ? "miss" : "on";
-    } else if (ctx.out.has(t) && bkLocked()) cls = "gone";
+    } else if (ctx.out.has(t) && bkPastLock()) cls = "gone";
     const inner = `<span class="bk-sd">${esc(bkSeedText(c, t))}</span>${bkMark(t)}<span class="bk-nm">${esc(t)}</span>${tag}`;
     return can
       ? `<button class="bk-t ${cls}" data-bk="${esc(g)}" data-team="${esc(t)}" aria-pressed="${picks[g] === t}">${inner}</button>`
@@ -2774,7 +2779,7 @@ function renderBracket() {
        <button class="linkish" id="bk-rename" style="color:inherit;font-size:inherit">Rename</button>` : ""}
        <button class="linkish" id="bk-back" style="color:inherit;font-size:inherit">Back to ${S.me ? "mine" : "the results"}</button></div>`
     : !locked
-      ? `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games are open until 1:15 PM today."}
+      ? bkUnlocked() ? `<div class="banner"><b>Brackets are open.</b></div>` : `<div class="banner"><b>${bkThuLocked() ? "Thursday games are locked." : "Thursday games are open until 1:15 PM today."}
          Everything else locks Fri., Oct. 30 at 5:00 PM.</b>${S.me ? "" :
           ` <button class="linkish" id="bk-signin" style="color:inherit;font-size:inherit">Sign in</button> to fill one out.`}</div>`
       : "";
@@ -2849,7 +2854,7 @@ function bkBoardRows(cls) {
 const BK_SORTS = { pts: x => x.pts, r4: x => x.rounds[4], r3: x => x.rounds[3], r2: x => x.rounds[2], r1: x => x.rounds[1], r0: x => x.rounds[0] };
 function renderBracketBoard() {
   const el = $("#bk-board");
-  const locked = bkLocked();
+  const locked = bkPastLock();
   if (!locked && !S.isAdmin) {
     $("#bk-board-classes").innerHTML = "";
     el.innerHTML = '<div class="empty">Standings start when brackets lock, Friday at 5:00 PM.</div>';
@@ -2920,7 +2925,7 @@ $("#view-bracket").addEventListener("click", e => {
   if (e.target.closest("#bk-signin")) { openGate(); return; }
   const who = e.target.closest("[data-who]");
   if (who) {
-    if (!bkLocked() && !S.isAdmin) return;
+    if (!bkPastLock() && !S.isAdmin) return;
     S.bkWho = S.me && bkMine()?.id === who.dataset.who ? null : who.dataset.who;
     render(); window.scrollTo({ top: 0, behavior: "smooth" }); return;
   }
@@ -3042,6 +3047,7 @@ setInterval(() => {
 function renderBracketAdmin() {
   const sel = $("#bk-adm-class"), el = $("#bk-adm");
   if (!sel || !el) return;
+  $("#bk-unlock").textContent = bkUnlocked() ? "Lock brackets" : "Unlock brackets";
   if (!sel.options.length) sel.innerHTML = BK_CLASSES.map(k => `<option value="${k}">${bkTab(k)}</option>`).join("");
   if (Date.now() - BKR.at > 10 * 60e3 && !BKR.loading) bkLoadResults().then(() => { if (S.view === "admin") render(); });
   const c = sel.value || "6A", fix = (S.bkMeta && S.bkMeta.results) || {};
@@ -3067,7 +3073,14 @@ $("#bk-adm").addEventListener("click", async e => {
   const b = e.target.closest("[data-bkr]"); if (!b) return;
   const next = { ...((S.bkMeta && S.bkMeta.results) || {}) };
   if (b.dataset.v) next[b.dataset.bkr] = b.dataset.v; else delete next[b.dataset.bkr];
-  try { await setDoc(doc(db, "bracketMeta", BK_ID), { results: next }); }
+  // Whole-document write, so a removed result really goes; the switch rides along.
+  try { await setDoc(doc(db, "bracketMeta", BK_ID), { results: next, unlocked: bkUnlocked() }); }
+  catch (err) { alert(friendlyError(err)); }
+});
+$("#bk-unlock").addEventListener("click", async () => {
+  const open = bkUnlocked();
+  if (!open && !confirm("Everyone can change their whole bracket, including games already played, until you lock it again. Unlock?")) return;
+  try { await setDoc(doc(db, "bracketMeta", BK_ID), { unlocked: !open }, { merge: true }); }
   catch (err) { alert(friendlyError(err)); }
 });
 
@@ -3077,7 +3090,7 @@ function bkTick() {
   if (bkLockState() === bkWasLocked) return;
   bkWasLocked = bkLockState();
   bkSubscribe();
-  if (S.view === "bracket") render();
+  if (S.view === "bracket" || S.view === "admin") render();
 }
 
 /* ==========================================================

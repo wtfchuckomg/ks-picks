@@ -24,6 +24,11 @@ service cloud.firestore {
         && request.auth.token.email in ['chuck8303@gmail.com'];
     }
 
+    // The commissioner's Unlock switch: while it's on every bracket is open, whatever the locks below say.
+    function bkUnlocked() {
+      return get(/databases/$(database)/documents/bracketMeta/po26).data.get('unlocked', false) == true;
+    }
+
     function week(wid) {
       return get(/databases/$(database)/documents/weeks/$(wid)).data;
     }
@@ -102,7 +107,7 @@ service cloud.firestore {
           && request.resource.data.picks.size() <= 300
           && request.resource.data.name is string
           && request.resource.data.name.size() <= 40
-          && request.time < bkLock();
+          && (request.time < bkLock() || bkUnlocked());
       }
 
       allow read: if isAdmin()
@@ -112,14 +117,14 @@ service cloud.firestore {
       // After Thursday's lock a new bracket can't include a Thursday game...
       allow create: if isAdmin()
         || (bkValid(bracketId)
-            && (request.time < bkThuLock()
+            && (request.time < bkThuLock() || bkUnlocked()
                 || !request.resource.data.picks.keys().hasAny(bkThuGames())));
 
       // ...and a saved one can't change one. Only the owner may update.
       allow update: if isAdmin()
         || (bkValid(bracketId)
             && resource.data.uid == request.auth.uid
-            && (request.time < bkThuLock()
+            && (request.time < bkThuLock() || bkUnlocked()
                 || !request.resource.data.picks.diff(resource.data.picks).affectedKeys().hasAny(bkThuGames())));
 
       allow delete: if isAdmin();
@@ -138,7 +143,7 @@ service cloud.firestore {
             && request.resource.data.bracketId == 'po26'
             && request.resource.data.picks is map
             && request.resource.data.picks.size() <= 300
-            && request.time < timestamp.date(2026, 10, 30) + duration.value(22, 'h'));
+            && (request.time < timestamp.date(2026, 10, 30) + duration.value(22, 'h') || bkUnlocked()));
       allow delete: if isAdmin();
     }
 
